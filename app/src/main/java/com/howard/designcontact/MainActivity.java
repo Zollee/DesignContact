@@ -1,8 +1,15 @@
 package com.howard.designcontact;
 
+import android.content.ContentUris;
 import android.database.Cursor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
+import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
+
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -18,6 +25,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
+import java.io.InputStream;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +41,10 @@ public class MainActivity extends AppCompatActivity
 
     private RecyclerView.LayoutManager mLayoutManager;
 
+    private static final String[] PHONES_PROJECTION = new String[] {
+            Phone.DISPLAY_NAME, Phone.NUMBER, Phone.TYPE, Photo.PHOTO_ID, Phone.CONTACT_ID };
+
+    private ArrayList<mContact> mContacts = new ArrayList<mContact>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -89,120 +101,146 @@ public class MainActivity extends AppCompatActivity
         });
     }
 
-    private ArrayList<String> getData() {
-        ArrayList<String> data = new ArrayList<>();
-
-        Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
-                null, null, null, null);
+    private ArrayList<mContact> getData() {
+        mContact temp;
+        Cursor cursor = getContentResolver().query(Phone.CONTENT_URI, PHONES_PROJECTION, null, null, null);
         String phoneName;
-        String phoneNumber;
-        String phoneType = " ";
+     //   String phoneNumber;
+     //   String phoneType = " ";
+        Long contactId;
+        Long photoId;
+        Bitmap contactPhoto = null;
 
-        while (cursor.moveToNext()) {
-            //获取名称
-            phoneNumber = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
-            phoneName = cursor.getString(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME));//姓名
-            int type = cursor.getInt(cursor.getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE));
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                temp = new mContact();
 
-            switch (type) {
-                case ContactsContract.CommonDataKinds.Phone.TYPE_HOME:
-                    phoneType = "HOME";
-                    break;
-                case ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE:
-                    phoneType = "MOBILE";
-                    // do something with the Mobile number here...
-                    break;
-                case ContactsContract.CommonDataKinds.Phone.TYPE_WORK:
-                    phoneType = "WORK";
-                    break;
+                //获取名称
+                phoneName = cursor.getString(0);
+             //   phoneNumber = cursor.getString(1);
+                //int type = cursor.getInt(2);
+                photoId = cursor.getLong(3);
+                contactId = cursor.getLong(4);
 
-                case ContactsContract.CommonDataKinds.Phone.TYPE_FAX_WORK:
-                    phoneType = "FAX_WORK";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_FAX_HOME:
-                    phoneType = "FAX_HOME";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_PAGER:
-                    phoneType = "PAGER";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_OTHER:
-                    phoneType = "OTHER";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_CALLBACK:
-                    phoneType = "CALLBACK";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_CAR:
-                    phoneType = "CAR";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_COMPANY_MAIN:
-                    phoneType = "COMPANY_MAIN";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_ISDN:
-                    phoneType = "ISDN";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_MAIN:
-                    phoneType = "MAIN";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_OTHER_FAX:
-                    phoneType = "OTHER_FAX";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_RADIO:
-                    phoneType = "RADIO";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_TELEX:
-                    phoneType = "TELEX";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_TTY_TDD:
-                    phoneType = "TTY_TDD";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_WORK_MOBILE:
-                    phoneType = "WORK_MOBILE";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_WORK_PAGER:
-                    phoneType = "WORK_PAGER";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_ASSISTANT:
-                    phoneType = "ASSISTANT";
-                    break;
-
-                case ContactsContract.CommonDataKinds.Phone.TYPE_MMS:
-                    phoneType = "MMS";
-                    break;
-
-                default:
-                    phoneType = "默认";
-
-            }
-
-            phoneNumber = phoneNumber + "/" + phoneType;
-            data.add(phoneName + " " + phoneNumber);
-
-            //按中文排序
-            Collections.sort(data, new Comparator<String>() {
-                public int compare(String o1, String o2) {
-                    return Collator.getInstance(Locale.CHINESE).compare(o1, o2);
+                if(photoId > 0 ) {
+                    Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,contactId);
+                    InputStream input = ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), uri);
+                    contactPhoto = BitmapFactory.decodeStream(input);
+                }else {
+                    contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
                 }
-            });
+
+                /*
+                switch (type) {
+                    case Phone.TYPE_HOME:
+                        phoneType = "HOME";
+                        break;
+                    case Phone.TYPE_MOBILE:
+                        phoneType = "MOBILE";
+                        // do something with the Mobile number here...
+                        break;
+                    case Phone.TYPE_WORK:
+                        phoneType = "WORK";
+                        break;
+
+                    case Phone.TYPE_FAX_WORK:
+                        phoneType = "FAX_WORK";
+                        break;
+
+                    case Phone.TYPE_FAX_HOME:
+                        phoneType = "FAX_HOME";
+                        break;
+
+                    case Phone.TYPE_PAGER:
+                        phoneType = "PAGER";
+                        break;
+
+                    case Phone.TYPE_OTHER:
+                        phoneType = "OTHER";
+                        break;
+
+                    case Phone.TYPE_CALLBACK:
+                        phoneType = "CALLBACK";
+                        break;
+
+                    case Phone.TYPE_CAR:
+                        phoneType = "CAR";
+                        break;
+
+                    case Phone.TYPE_COMPANY_MAIN:
+                        phoneType = "COMPANY_MAIN";
+                        break;
+
+                    case Phone.TYPE_ISDN:
+                        phoneType = "ISDN";
+                        break;
+
+                    case Phone.TYPE_MAIN:
+                        phoneType = "MAIN";
+                        break;
+
+                    case Phone.TYPE_OTHER_FAX:
+                        phoneType = "OTHER_FAX";
+                        break;
+
+                    case Phone.TYPE_RADIO:
+                        phoneType = "RADIO";
+                        break;
+
+                    case Phone.TYPE_TELEX:
+                        phoneType = "TELEX";
+                        break;
+
+                    case Phone.TYPE_TTY_TDD:
+                        phoneType = "TTY_TDD";
+                        break;
+
+                    case Phone.TYPE_WORK_MOBILE:
+                        phoneType = "WORK_MOBILE";
+                        break;
+
+                    case Phone.TYPE_WORK_PAGER:
+                        phoneType = "WORK_PAGER";
+                        break;
+
+                    case Phone.TYPE_ASSISTANT:
+                        phoneType = "ASSISTANT";
+                        break;
+
+                    case Phone.TYPE_MMS:
+                        phoneType = "MMS";
+                        break;
+
+                    default:
+                        phoneType = "默认";
+
+                }
+*/
+                temp.name = phoneName;
+              //  temp.number = phoneNumber;
+                //temp.type = phoneType;
+                temp.photo = contactPhoto;
+
+                mContacts.add(temp);
+            }
+        }
+
+        //按中文排序
+        Collections.sort(mContacts, new Comparator<mContact>() {
+            public int compare(mContact o1, mContact o2) {
+                return Collator.getInstance(Locale.CHINESE).compare(o1.getName(), o2.getName());
+            }
+        });
+
+        //删除重复姓名
+        for (int i = 0, j = 1; j < mContacts.size(); i++, j++){
+            if (mContacts.get(i).getName().equals(mContacts.get(j).getName()))
+                mContacts.remove(i);
         }
 
         cursor.close();
 
-        return data;
+        return mContacts;
     }
 
     @Override

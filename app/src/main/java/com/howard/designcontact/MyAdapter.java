@@ -4,6 +4,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -16,25 +17,23 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>{
     /**
      * 展示数据
      */
-    private ArrayList<String> mData;
+    private ArrayList<mContact> mData;
 
-    /**
-     * 事件回调监听
-     */
+
     private MyAdapter.OnItemClickListener onItemClickListener;
 
-    public MyAdapter(ArrayList<String> data) {
+    public MyAdapter(ArrayList<mContact> data) {
         this.mData = data;
     }
 
-    public void updateData(ArrayList<String> data) {
+    public void updateData(ArrayList<mContact> data) {
         this.mData = data;
         notifyDataSetChanged();
     }
 
     /**
      * 添加新的Item
-     */
+
     public void addNewItem() {
         if(mData == null) {
             mData = new ArrayList<>();
@@ -42,10 +41,11 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>{
         mData.add(0, "new Item");
         notifyItemInserted(0);
     }
+     */
 
     /**
      * 删除Item
-     */
+
     public void deleteItem() {
         if(mData == null || mData.isEmpty()) {
             return;
@@ -53,6 +53,7 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>{
         mData.remove(0);
         notifyItemRemoved(0);
     }
+     */
 
     /**
      * 设置回调监听
@@ -75,7 +76,9 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>{
     @Override
     public void onBindViewHolder(final ViewHolder holder, int position) {
         // 绑定数据
-        holder.mTv.setText(mData.get(position));
+        holder.mName.setText(mData.get(position).getName());
+      //  holder.mPhone.setText(mData.get(position).getNumber());
+        holder.mPic.setImageBitmap(mData.get(position).getPhoto());
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,11 +110,15 @@ public class MyAdapter extends RecyclerView.Adapter<MyAdapter.ViewHolder>{
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView mTv;
+        TextView mName;
+      //  TextView mPhone;
+        ImageView mPic;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mTv = (TextView) itemView.findViewById(R.id.item_tv);
+            mName = (TextView) itemView.findViewById(R.id.item_list_name);
+          //  mPhone = (TextView) itemView.findViewById(R.id.item_list_phone);
+            mPic = (ImageView) itemView.findViewById(R.id.item_list_pic);
         }
     }
 
