@@ -1,15 +1,12 @@
 package com.howard.designcontact;
 
-import android.content.ContentUris;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.net.Uri;
 import android.os.Bundle;
-import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
 import android.provider.ContactsContract.CommonDataKinds.Photo;
-
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
@@ -25,7 +22,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
 
-import java.io.InputStream;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,15 +31,13 @@ import java.util.Locale;
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
+    private static final String[] PHONES_PROJECTION = new String[]{
+            Phone.DISPLAY_NAME, Phone.NUMBER, Phone.TYPE, Photo.PHOTO_ID, Phone.CONTACT_ID};
+    ContactOpenHelper contactOpenHelper;
+    SQLiteDatabase dbRead;
     private RecyclerView mRecyclerView;
-
     private MyAdapter mAdapter;
-
     private RecyclerView.LayoutManager mLayoutManager;
-
-    private static final String[] PHONES_PROJECTION = new String[] {
-            Phone.DISPLAY_NAME, Phone.NUMBER, Phone.TYPE, Photo.PHOTO_ID, Phone.CONTACT_ID };
-
     private ArrayList<mContact> mContacts = new ArrayList<mContact>();
 
     @Override
@@ -71,6 +65,9 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        contactOpenHelper = new ContactOpenHelper(getApplicationContext());
+
+
         initData();
         initView();
     }
@@ -91,134 +88,36 @@ public class MainActivity extends AppCompatActivity
         mAdapter.setOnItemClickListener(new MyAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-                Toast.makeText(MainActivity.this,"click " + position + " item", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "click " + position + " item", Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onItemLongClick(View view, int position) {
-                Toast.makeText(MainActivity.this,"long click " + position + " item", Toast.LENGTH_SHORT).show();
+                Toast.makeText(MainActivity.this, "long click " + position + " item", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     private ArrayList<mContact> getData() {
+
+        dbRead = contactOpenHelper.getReadableDatabase();
+        String[] COLUMN_NAME = new String[]{"_id", "name", "photo", "isStarred"};
+
         mContact temp;
-        Cursor cursor = getContentResolver().query(Phone.CONTENT_URI, PHONES_PROJECTION, null, null, null);
+        Cursor cursor = dbRead.query("nameInfo", COLUMN_NAME, null, null, null, null, null, null);
         String phoneName;
-     //   String phoneNumber;
-     //   String phoneType = " ";
-        Long contactId;
-        Long photoId;
         Bitmap contactPhoto = null;
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 temp = new mContact();
 
-                //获取名称
-                phoneName = cursor.getString(0);
-             //   phoneNumber = cursor.getString(1);
-                //int type = cursor.getInt(2);
-                photoId = cursor.getLong(3);
-                contactId = cursor.getLong(4);
+                phoneName = cursor.getString(1);
 
-                if(photoId > 0 ) {
-                    Uri uri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI,contactId);
-                    InputStream input = ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), uri);
-                    contactPhoto = BitmapFactory.decodeStream(input);
-                }else {
-                    contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
-                }
+                byte[] in = cursor.getBlob(2);
+                contactPhoto = BitmapFactory.decodeByteArray(in, 0, in.length);
 
-                /*
-                switch (type) {
-                    case Phone.TYPE_HOME:
-                        phoneType = "HOME";
-                        break;
-                    case Phone.TYPE_MOBILE:
-                        phoneType = "MOBILE";
-                        // do something with the Mobile number here...
-                        break;
-                    case Phone.TYPE_WORK:
-                        phoneType = "WORK";
-                        break;
-
-                    case Phone.TYPE_FAX_WORK:
-                        phoneType = "FAX_WORK";
-                        break;
-
-                    case Phone.TYPE_FAX_HOME:
-                        phoneType = "FAX_HOME";
-                        break;
-
-                    case Phone.TYPE_PAGER:
-                        phoneType = "PAGER";
-                        break;
-
-                    case Phone.TYPE_OTHER:
-                        phoneType = "OTHER";
-                        break;
-
-                    case Phone.TYPE_CALLBACK:
-                        phoneType = "CALLBACK";
-                        break;
-
-                    case Phone.TYPE_CAR:
-                        phoneType = "CAR";
-                        break;
-
-                    case Phone.TYPE_COMPANY_MAIN:
-                        phoneType = "COMPANY_MAIN";
-                        break;
-
-                    case Phone.TYPE_ISDN:
-                        phoneType = "ISDN";
-                        break;
-
-                    case Phone.TYPE_MAIN:
-                        phoneType = "MAIN";
-                        break;
-
-                    case Phone.TYPE_OTHER_FAX:
-                        phoneType = "OTHER_FAX";
-                        break;
-
-                    case Phone.TYPE_RADIO:
-                        phoneType = "RADIO";
-                        break;
-
-                    case Phone.TYPE_TELEX:
-                        phoneType = "TELEX";
-                        break;
-
-                    case Phone.TYPE_TTY_TDD:
-                        phoneType = "TTY_TDD";
-                        break;
-
-                    case Phone.TYPE_WORK_MOBILE:
-                        phoneType = "WORK_MOBILE";
-                        break;
-
-                    case Phone.TYPE_WORK_PAGER:
-                        phoneType = "WORK_PAGER";
-                        break;
-
-                    case Phone.TYPE_ASSISTANT:
-                        phoneType = "ASSISTANT";
-                        break;
-
-                    case Phone.TYPE_MMS:
-                        phoneType = "MMS";
-                        break;
-
-                    default:
-                        phoneType = "默认";
-
-                }
-*/
                 temp.name = phoneName;
-              //  temp.number = phoneNumber;
-                //temp.type = phoneType;
                 temp.photo = contactPhoto;
 
                 mContacts.add(temp);
@@ -231,12 +130,6 @@ public class MainActivity extends AppCompatActivity
                 return Collator.getInstance(Locale.CHINESE).compare(o1.getName(), o2.getName());
             }
         });
-
-        //删除重复姓名
-        for (int i = 0, j = 1; j < mContacts.size(); i++, j++){
-            if (mContacts.get(i).getName().equals(mContacts.get(j).getName()))
-                mContacts.remove(i);
-        }
 
         cursor.close();
 
