@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.provider.ContactsContract;
 import android.provider.ContactsContract.CommonDataKinds.Phone;
+import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -29,11 +30,11 @@ public class CheckPermission extends AppCompatActivity {
 
     public static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
     private static final String[] PHONES_PROJECTION = new String[]{
-            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
-            ContactsContract.CommonDataKinds.Phone.NUMBER,
-            ContactsContract.CommonDataKinds.Phone.TYPE,
-            ContactsContract.CommonDataKinds.Photo.PHOTO_ID,
-            ContactsContract.CommonDataKinds.Phone.CONTACT_ID
+            Phone.DISPLAY_NAME,
+            Phone.NUMBER,
+            Phone.TYPE,
+            Photo.PHOTO_ID,
+            Phone.CONTACT_ID
     };
     ContactOpenHelper contactOpenHelper;
     SQLiteDatabase dbWrite;
@@ -204,6 +205,7 @@ public class CheckPermission extends AppCompatActivity {
                     cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{""+phoneName}, null, null, null);
 
                     if (cursorTemp.getCount() == 0) {
+                        //无重名
                         values.put("name", phoneName);
                         values.put("photo", img);
                         dbWrite.insert("nameInfo", null, values);
@@ -217,8 +219,10 @@ public class CheckPermission extends AppCompatActivity {
                         values.put("phoneType", phoneType);
                         dbWrite.insert("phoneInfo", null, values);
                     } else {
+                        //有重名，检测电话
                         cursorTemp = dbRead.query("phoneInfo", COLUMN_PHONE, "phoneNumber=?", new String[]{""+phoneNumber}, null, null, null, null);
                         if (cursorTemp.getCount() == 0) {
+                            //重名，新号码
                             cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{""+phoneName}, null, null, null, null);
 
                             cursorTemp.moveToFirst();
