@@ -1,5 +1,7 @@
-package com.howard.designcontact;
+package com.howard.designcontact.Activity;
 
+import android.app.ActivityOptions;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -10,6 +12,7 @@ import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -17,10 +20,19 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.transition.Transition;
+import android.transition.TransitionInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.Window;
 import android.widget.Toast;
+
+import com.howard.designcontact.Adapter.ContactItemAdapter;
+import com.howard.designcontact.Helper.ContactOpenHelper;
+import com.howard.designcontact.Helper.MyDividerItemDecoration;
+import com.howard.designcontact.R;
+import com.howard.designcontact.mContact;
 
 import java.text.Collator;
 import java.util.ArrayList;
@@ -28,22 +40,22 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
 
-public class MainActivity extends AppCompatActivity
+import static android.support.v4.app.ActivityOptionsCompat.makeSceneTransitionAnimation;
+
+public class ContactListActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
-    private static final String[] PHONES_PROJECTION = new String[]{
-            Phone.DISPLAY_NAME, Phone.NUMBER, Phone.TYPE, Photo.PHOTO_ID, Phone.CONTACT_ID};
     ContactOpenHelper contactOpenHelper;
     SQLiteDatabase dbRead;
     private RecyclerView mRecyclerView;
-    private MyAdapter mAdapter;
+    private ContactItemAdapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private ArrayList<mContact> mContacts = new ArrayList<mContact>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_contact_list);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -74,7 +86,7 @@ public class MainActivity extends AppCompatActivity
 
     private void initData() {
         mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-        mAdapter = new MyAdapter(getData());
+        mAdapter = new ContactItemAdapter(getData());
     }
 
     private void initView() {
@@ -85,15 +97,17 @@ public class MainActivity extends AppCompatActivity
         mRecyclerView.setAdapter(mAdapter);
         mRecyclerView.addItemDecoration(new MyDividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
-        mAdapter.setOnItemClickListener(new MyAdapter.OnItemClickListener() {
+        mAdapter.setOnItemClickListener(new ContactItemAdapter.OnItemClickListener() {
             @Override
             public void onItemClick(View view, int position) {
-                Toast.makeText(MainActivity.this, "click " + position + " item", Toast.LENGTH_SHORT).show();
+                Intent intent = new Intent(getApplicationContext(), ContactDetailActivity.class);
+                intent.putExtra("mContact", mContacts.get(position));
+                startActivity(intent, ActivityOptions.makeSceneTransitionAnimation(ContactListActivity.this).toBundle());
             }
 
             @Override
             public void onItemLongClick(View view, int position) {
-                Toast.makeText(MainActivity.this, "long click " + position + " item", Toast.LENGTH_SHORT).show();
+                Toast.makeText(ContactListActivity.this, "long click " + position + " item", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -106,7 +120,6 @@ public class MainActivity extends AppCompatActivity
         mContact temp;
         Cursor cursor = dbRead.query("nameInfo", COLUMN_NAME, null, null, null, null, null, null);
         String phoneName;
-        Bitmap contactPhoto = null;
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -115,10 +128,10 @@ public class MainActivity extends AppCompatActivity
                 phoneName = cursor.getString(1);
 
                 byte[] in = cursor.getBlob(2);
-                contactPhoto = BitmapFactory.decodeByteArray(in, 0, in.length);
 
+                temp.photoCore = in;
                 temp.name = phoneName;
-                temp.photo = contactPhoto;
+                temp.photo = temp.getPhoto();
 
                 mContacts.add(temp);
             }

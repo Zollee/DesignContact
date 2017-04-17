@@ -1,4 +1,4 @@
-package com.howard.designcontact;
+package com.howard.designcontact.Helper;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;

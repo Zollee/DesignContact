@@ -1,4 +1,4 @@
-package com.howard.designcontact;
+package com.howard.designcontact.Helper;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -15,12 +15,12 @@ import android.view.View;
  * RecyclerView 间隔
  */
 
-public class MyDividerItemDecoration  extends RecyclerView.ItemDecoration {
+public class MyDividerItemDecoration extends RecyclerView.ItemDecoration {
+    public static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;
+    public static final int VERTICAL_LIST = LinearLayoutManager.VERTICAL;
     private static final int[] ATTRS = new int[]{
             android.R.attr.listDivider
     };
-    public static final int HORIZONTAL_LIST = LinearLayoutManager.HORIZONTAL;
-    public static final int VERTICAL_LIST = LinearLayoutManager.VERTICAL;
     /**
      * 用于绘制间隔样式
      */

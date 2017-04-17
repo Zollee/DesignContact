@@ -1,4 +1,4 @@
-package com.howard.designcontact;
+package com.howard.designcontact.Activity;
 
 import android.Manifest;
 import android.content.ContentUris;
@@ -20,13 +20,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.widget.Toast;
 
+import com.howard.designcontact.Helper.ContactOpenHelper;
+import com.howard.designcontact.R;
+
 import org.apache.commons.io.IOUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 
 
-public class CheckPermission extends AppCompatActivity {
+public class LoginActivity extends AppCompatActivity {
 
     public static final int MY_PERMISSIONS_REQUEST_READ_CONTACTS = 1;
     private static final String[] PHONES_PROJECTION = new String[]{
@@ -43,7 +46,7 @@ public class CheckPermission extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_permission_check);
+        setContentView(R.layout.activity_login);
 
         contactOpenHelper = new ContactOpenHelper(getApplicationContext());
 
@@ -63,7 +66,7 @@ public class CheckPermission extends AppCompatActivity {
             }
         } else {
             addContact();
-            startActivity(new Intent(getApplicationContext(), MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+            startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
         }
     }
 
@@ -72,18 +75,18 @@ public class CheckPermission extends AppCompatActivity {
         String phoneName;
         String phoneNumber;
         int typeTemp;
-        String phoneType = "";
+        String phoneType;
 
         Long contactId;
         Long photoId;
 
-        Bitmap contactPhoto = null;
+        Bitmap contactPhoto;
         ByteArrayOutputStream baos;
         byte[] img = null;
         ContentValues values;
 
-        String[] COLUMN_NAME = new String[]{"_id","name","photo","isStarred"};
-        String[] COLUMN_PHONE = new String[]{"id","nameId","phoneNumber","phoneType"};
+        String[] COLUMN_NAME = new String[]{"_id", "name", "photo", "isStarred"};
+        String[] COLUMN_PHONE = new String[]{"id", "nameId", "phoneNumber", "phoneType"};
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
@@ -103,8 +106,7 @@ public class CheckPermission extends AppCompatActivity {
                     } catch (Exception e) {
                         Log.d("img", "image error");
                     }
-                }
-                else {
+                } else {
                     contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
                     baos = new ByteArrayOutputStream();
                     contactPhoto.compress(Bitmap.CompressFormat.PNG, 100, baos);
@@ -202,7 +204,7 @@ public class CheckPermission extends AppCompatActivity {
                     values = new ContentValues();
 
                     Cursor cursorTemp;
-                    cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{""+phoneName}, null, null, null);
+                    cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{"" + phoneName}, null, null, null);
 
                     if (cursorTemp.getCount() == 0) {
                         //无重名
@@ -210,7 +212,7 @@ public class CheckPermission extends AppCompatActivity {
                         values.put("photo", img);
                         dbWrite.insert("nameInfo", null, values);
 
-                        cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{""+phoneName}, null, null, null, null);
+                        cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{"" + phoneName}, null, null, null, null);
 
                         cursorTemp.moveToFirst();
                         values = new ContentValues();
@@ -220,10 +222,10 @@ public class CheckPermission extends AppCompatActivity {
                         dbWrite.insert("phoneInfo", null, values);
                     } else {
                         //有重名，检测电话
-                        cursorTemp = dbRead.query("phoneInfo", COLUMN_PHONE, "phoneNumber=?", new String[]{""+phoneNumber}, null, null, null, null);
+                        cursorTemp = dbRead.query("phoneInfo", COLUMN_PHONE, "phoneNumber=?", new String[]{"" + phoneNumber}, null, null, null, null);
                         if (cursorTemp.getCount() == 0) {
                             //重名，新号码
-                            cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{""+phoneName}, null, null, null, null);
+                            cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{"" + phoneName}, null, null, null, null);
 
                             cursorTemp.moveToFirst();
                             values = new ContentValues();
@@ -253,7 +255,7 @@ public class CheckPermission extends AppCompatActivity {
                 if (grantResults.length > 0
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     addContact();
-                    startActivity(new Intent(getApplicationContext(), MainActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+                    startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
                     // permission was granted, yay! Do the
                     // contacts-related task you need to do.
                 } else {
@@ -261,7 +263,6 @@ public class CheckPermission extends AppCompatActivity {
                     // permission denied, boo! Disable the
                     // functionality that depends on this permission.
                 }
-                return;
             }
         }
     }
