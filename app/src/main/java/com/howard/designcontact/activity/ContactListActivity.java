@@ -1,18 +1,13 @@
-package com.howard.designcontact.Activity;
+package com.howard.designcontact.activity;
 
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
-import android.provider.ContactsContract.CommonDataKinds.Phone;
-import android.provider.ContactsContract.CommonDataKinds.Photo;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
@@ -20,18 +15,15 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.transition.Transition;
-import android.transition.TransitionInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.Window;
 import android.widget.Toast;
 
-import com.howard.designcontact.Adapter.ContactItemAdapter;
-import com.howard.designcontact.Helper.ContactOpenHelper;
-import com.howard.designcontact.Helper.MyDividerItemDecoration;
 import com.howard.designcontact.R;
+import com.howard.designcontact.adapter.ContactItemAdapter;
+import com.howard.designcontact.helper.ContactOpenHelper;
+import com.howard.designcontact.helper.MyDividerItemDecoration;
 import com.howard.designcontact.mContact;
 
 import java.text.Collator;
@@ -39,8 +31,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
-
-import static android.support.v4.app.ActivityOptionsCompat.makeSceneTransitionAnimation;
 
 public class ContactListActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
@@ -79,7 +69,6 @@ public class ContactListActivity extends AppCompatActivity
 
         contactOpenHelper = new ContactOpenHelper(getApplicationContext());
 
-
         initData();
         initView();
     }
@@ -115,23 +104,21 @@ public class ContactListActivity extends AppCompatActivity
     private ArrayList<mContact> getData() {
 
         dbRead = contactOpenHelper.getReadableDatabase();
-        String[] COLUMN_NAME = new String[]{"_id", "name", "photo", "isStarred"};
+        String[] COLUMN_NAME = new String[]{"_id", "name", "photoSmall", "photoLarge", "isStarred"};
 
         mContact temp;
         Cursor cursor = dbRead.query("nameInfo", COLUMN_NAME, null, null, null, null, null, null);
-        String phoneName;
 
         if (cursor != null) {
             while (cursor.moveToNext()) {
                 temp = new mContact();
 
-                phoneName = cursor.getString(1);
-
-                byte[] in = cursor.getBlob(2);
-
-                temp.photoCore = in;
-                temp.name = phoneName;
-                temp.photo = temp.getPhoto();
+                temp.setId(cursor.getInt(0));
+                temp.setName(cursor.getString(1));
+                temp.setPhotoCore(cursor.getBlob(2));
+                temp.setPhotoDisplay(cursor.getBlob(3));
+                temp.photoSmall = temp.getPhotoSmall();
+                temp.photoLarge = temp.getPhotoLarge();
 
                 mContacts.add(temp);
             }

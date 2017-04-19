@@ -1,4 +1,4 @@
-package com.howard.designcontact.Helper;
+package com.howard.designcontact.helper;
 
 import android.content.Context;
 import android.content.res.TypedArray;

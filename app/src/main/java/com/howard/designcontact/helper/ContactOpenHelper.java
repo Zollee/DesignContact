@@ -1,4 +1,4 @@
-package com.howard.designcontact.Helper;
+package com.howard.designcontact.helper;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -17,10 +17,11 @@ public class ContactOpenHelper extends SQLiteOpenHelper {
         db.execSQL("create table nameInfo(" +
                 "_id integer primary key," +
                 "name text UNIQUE," +
-                "photo BLOB," +
+                "photoSmall BLOB," +
+                "photoLarge BLOB," +
                 "isStarred integer DEFAULT '0')");
 
-        db.execSQL("create table PhoneInfo(" +
+        db.execSQL("create table phoneInfo(" +
                 "id integer primary key," +
                 "nameId integer," +
                 "phoneNumber text," +

@@ -1,4 +1,4 @@
-package com.howard.designcontact.Adapter;
+package com.howard.designcontact.adapter;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -80,8 +80,7 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
     public void onBindViewHolder(final ViewHolder holder, int position) {
         // 绑定数据
         holder.mName.setText(mData.get(position).getName());
-        //  holder.mPhone.setText(mData.get(position).getNumber());
-        holder.mPic.setImageBitmap(mData.get(position).getPhoto());
+        holder.mPic.setImageBitmap(mData.get(position).getPhotoSmall());
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -120,7 +119,6 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView mName;
-        //  TextView mPhone;
         ImageView mPic;
 
         public ViewHolder(View itemView) {
