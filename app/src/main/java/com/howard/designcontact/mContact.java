@@ -16,8 +16,6 @@ public class mContact implements Parcelable {
             mContact p = new mContact();
             p.setId(source.readInt());
             p.setName(source.readString());
-            p.setNumber(source.readString());
-            p.setType(source.readString());
             p.photoCore = new byte[source.readInt()];
             source.readByteArray(p.photoCore);
             p.photoDisplay = new byte[source.readInt()];
@@ -34,8 +32,6 @@ public class mContact implements Parcelable {
 
     public int id;
     public String name;
-    public String number;
-    public String type;
     public Bitmap photoSmall;
     public Bitmap photoLarge;
     public byte[] photoCore;
@@ -47,8 +43,6 @@ public class mContact implements Parcelable {
         // 2.序列化对象
         dest.writeInt(id);
         dest.writeString(name);
-        dest.writeString(number);
-        dest.writeString(type);
         dest.writeInt(photoCore.length);
         dest.writeByteArray(photoCore);
         dest.writeInt(photoDisplay.length);
@@ -64,7 +58,8 @@ public class mContact implements Parcelable {
     public int getId() {
         return id;
     }
-    public void setId(int id){
+
+    public void setId(int id) {
         this.id = id;
     }
 
@@ -74,22 +69,6 @@ public class mContact implements Parcelable {
 
     public void setName(String name) {
         this.name = name;
-    }
-
-    public String getNumber() {
-        return number;
-    }
-
-    public void setNumber(String number) {
-        this.number = number;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
     public void setPhotoCore(byte[] photoCore) {

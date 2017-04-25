@@ -107,86 +107,16 @@ public class LoginActivity extends AppCompatActivity {
                 //将分类转换
                 switch (typeTemp) {
                     case Phone.TYPE_HOME:
-                        phoneType = "HOME";
+                        phoneType = "家庭";
                         break;
                     case Phone.TYPE_MOBILE:
-                        phoneType = "MOBILE";
+                        phoneType = "手机";
                         break;
                     case Phone.TYPE_WORK:
-                        phoneType = "WORK";
+                        phoneType = "工作";
                         break;
-
-                    case Phone.TYPE_FAX_WORK:
-                        phoneType = "FAX_WORK";
-                        break;
-
-                    case Phone.TYPE_FAX_HOME:
-                        phoneType = "FAX_HOME";
-                        break;
-
-                    case Phone.TYPE_PAGER:
-                        phoneType = "PAGER";
-                        break;
-
-                    case Phone.TYPE_OTHER:
-                        phoneType = "OTHER";
-                        break;
-
-                    case Phone.TYPE_CALLBACK:
-                        phoneType = "CALLBACK";
-                        break;
-
-                    case Phone.TYPE_CAR:
-                        phoneType = "CAR";
-                        break;
-
-                    case Phone.TYPE_COMPANY_MAIN:
-                        phoneType = "COMPANY_MAIN";
-                        break;
-
-                    case Phone.TYPE_ISDN:
-                        phoneType = "ISDN";
-                        break;
-
-                    case Phone.TYPE_MAIN:
-                        phoneType = "MAIN";
-                        break;
-
-                    case Phone.TYPE_OTHER_FAX:
-                        phoneType = "OTHER_FAX";
-                        break;
-
-                    case Phone.TYPE_RADIO:
-                        phoneType = "RADIO";
-                        break;
-
-                    case Phone.TYPE_TELEX:
-                        phoneType = "TELEX";
-                        break;
-
-                    case Phone.TYPE_TTY_TDD:
-                        phoneType = "TTY_TDD";
-                        break;
-
-                    case Phone.TYPE_WORK_MOBILE:
-                        phoneType = "WORK_MOBILE";
-                        break;
-
-                    case Phone.TYPE_WORK_PAGER:
-                        phoneType = "WORK_PAGER";
-                        break;
-
-                    case Phone.TYPE_ASSISTANT:
-                        phoneType = "ASSISTANT";
-                        break;
-
-                    case Phone.TYPE_MMS:
-                        phoneType = "MMS";
-                        break;
-
                     default:
-                        phoneType = "默认";
-
+                        phoneType = "其他";
                 }
 
                 //获得头像

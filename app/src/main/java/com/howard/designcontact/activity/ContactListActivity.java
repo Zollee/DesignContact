@@ -79,7 +79,7 @@ public class ContactListActivity extends AppCompatActivity
     }
 
     private void initView() {
-        mRecyclerView = (RecyclerView) findViewById(R.id.my_recycler_view);
+        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_contact_list);
         // 设置布局管理器
         mRecyclerView.setLayoutManager(mLayoutManager);
         // 设置adapter

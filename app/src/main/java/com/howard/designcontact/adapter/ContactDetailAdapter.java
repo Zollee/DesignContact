@@ -8,28 +8,27 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.howard.designcontact.R;
-import com.howard.designcontact.mContact;
+import com.howard.designcontact.mPhone;
 
 import java.util.ArrayList;
 
 /**
- * Created by zhaohaoran on 2017/4/10.
+ * Created by zhaohaoran on 2017/4/24.
  */
 
-public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.ViewHolder> {
+public class ContactDetailAdapter extends RecyclerView.Adapter<ContactDetailAdapter.ViewHolder> {
     /**
      * 展示数据
      */
-    private ArrayList<mContact> mData;
+    private ArrayList<mPhone> mData;
 
+    private ContactDetailAdapter.OnItemClickListener onItemClickListener;
 
-    private ContactItemAdapter.OnItemClickListener onItemClickListener;
-
-    public ContactItemAdapter(ArrayList<mContact> data) {
+    public ContactDetailAdapter(ArrayList<mPhone> data) {
         this.mData = data;
     }
 
-    public void updateData(ArrayList<mContact> data) {
+    public void updateData(ArrayList<mPhone> data) {
         this.mData = data;
         notifyDataSetChanged();
     }
@@ -39,24 +38,24 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
      *
      * @param listener
      */
-    public void setOnItemClickListener(ContactItemAdapter.OnItemClickListener listener) {
+    public void setOnItemClickListener(ContactDetailAdapter.OnItemClickListener listener) {
         this.onItemClickListener = listener;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         // 实例化展示的view
-        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.view_contact_item, parent, false);
+        View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.view_contact_detail, parent, false);
         // 实例化viewholder
         ViewHolder viewHolder = new ViewHolder(v);
         return viewHolder;
     }
 
     @Override
-    public void onBindViewHolder(final ViewHolder holder, int position) {
+    public void onBindViewHolder(final ContactDetailAdapter.ViewHolder holder, int position) {
         // 绑定数据
-        holder.mName.setText(mData.get(position).getName());
-        holder.mPic.setImageBitmap(mData.get(position).getPhotoSmall());
+        holder.phoneNumber.setText(mData.get(position).getPhone());
+        holder.phoneType.setText(mData.get(position).getType());
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -94,14 +93,15 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
 
-        TextView mName;
-        ImageView mPic;
+        ImageView icon_msg;
+        TextView phoneNumber;
+        TextView phoneType;
 
         public ViewHolder(View itemView) {
             super(itemView);
-            mName = (TextView) itemView.findViewById(R.id.item_list_name);
-            //  mPhone = (TextView) itemView.findViewById(R.id.item_list_phone);
-            mPic = (ImageView) itemView.findViewById(R.id.item_list_pic);
+            icon_msg = (ImageView) itemView.findViewById(R.id.image_msg);
+            phoneNumber = (TextView) itemView.findViewById(R.id.number_detail);
+            phoneType = (TextView) itemView.findViewById(R.id.type_detail);
         }
     }
 }
