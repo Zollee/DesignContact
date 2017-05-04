@@ -1,8 +1,13 @@
 package com.howard.designcontact.activity;
 
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -12,9 +17,11 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.transition.TransitionInflater;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.Toast;
 
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactDetailAdapter;
@@ -92,13 +99,34 @@ public class ContactDetailActivity extends AppCompatActivity {
     }
 
     private void initView() {
-
         mRecyclerView = (RecyclerView) findViewById(R.id.recycler_contact_detail);
-        // 设置布局管理器
         mRecyclerView.setHasFixedSize(true);
         mRecyclerView.setLayoutManager(mLayoutManager);
-        // 设置adapter
         mRecyclerView.setAdapter(mAdapter);
+
+        mAdapter.setOnItemClickListener(new ContactDetailAdapter.OnItemClickListener() {
+            @Override
+            public void onItemClick(View view, int position) {
+                Uri uri = Uri.parse("tel:" + mPhones.get(position).getPhone());
+                Intent intent = new Intent(Intent.ACTION_DIAL, uri);
+                startActivity(intent);
+            }
+
+            public void onIconClick(View view, int position) {
+                Uri uri = Uri.parse("smsto:" + mPhones.get(position).getPhone());
+                Intent intent = new Intent(Intent.ACTION_SENDTO, uri);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onItemLongClick(View view, int position) {
+                //长按复制到剪贴板
+                ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+                ClipData clip = ClipData.newPlainText("Text Label", mPhones.get(position).getPhone());
+                clipboard.setPrimaryClip(clip);
+                Toast.makeText(getApplicationContext(), "" + mPhones.get(position).getPhone() + "已复制到剪贴板", Toast.LENGTH_SHORT).show();
+            }
+        });
 
         mRecyclerView.addItemDecoration(new MyDividerItemDecoration(this, LinearLayoutManager.VERTICAL));
     }

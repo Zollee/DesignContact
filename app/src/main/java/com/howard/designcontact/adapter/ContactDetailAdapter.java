@@ -20,16 +20,16 @@ public class ContactDetailAdapter extends RecyclerView.Adapter<ContactDetailAdap
     /**
      * 展示数据
      */
-    private ArrayList<mPhone> mData;
+    private ArrayList<mPhone> mPhones;
 
-    private ContactDetailAdapter.OnItemClickListener onItemClickListener;
+    private OnItemClickListener onItemClickListener;
 
-    public ContactDetailAdapter(ArrayList<mPhone> data) {
-        this.mData = data;
+    public ContactDetailAdapter(ArrayList<mPhone> mPhones) {
+        this.mPhones = mPhones;
     }
 
     public void updateData(ArrayList<mPhone> data) {
-        this.mData = data;
+        this.mPhones = data;
         notifyDataSetChanged();
     }
 
@@ -38,26 +38,23 @@ public class ContactDetailAdapter extends RecyclerView.Adapter<ContactDetailAdap
      *
      * @param listener
      */
-    public void setOnItemClickListener(ContactDetailAdapter.OnItemClickListener listener) {
+    public void setOnItemClickListener(final OnItemClickListener listener) {
         this.onItemClickListener = listener;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        // 实例化展示的view
         View v = LayoutInflater.from(parent.getContext()).inflate(R.layout.view_contact_detail, parent, false);
-        // 实例化viewholder
-        ViewHolder viewHolder = new ViewHolder(v);
-        return viewHolder;
+        return new ViewHolder(v);
     }
 
     @Override
-    public void onBindViewHolder(final ContactDetailAdapter.ViewHolder holder, int position) {
+    public void onBindViewHolder(final ContactDetailAdapter.ViewHolder holder, final int position) {
         // 绑定数据
-        holder.phoneNumber.setText(mData.get(position).getPhone());
-        holder.phoneType.setText(mData.get(position).getType());
+        holder.phoneNumber.setText(mPhones.get(position).getPhone());
+        holder.phoneType.setText(mPhones.get(position).getType());
 
-        holder.itemView.setOnClickListener(new View.OnClickListener() {
+        holder.phoneNumber.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(final View v) {
                 if (onItemClickListener != null) {
@@ -67,7 +64,7 @@ public class ContactDetailAdapter extends RecyclerView.Adapter<ContactDetailAdap
             }
         });
 
-        holder.itemView.setOnLongClickListener(new View.OnLongClickListener() {
+        holder.phoneNumber.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
             public boolean onLongClick(View v) {
                 if (onItemClickListener != null) {
@@ -78,15 +75,27 @@ public class ContactDetailAdapter extends RecyclerView.Adapter<ContactDetailAdap
                 return true;
             }
         });
+
+        holder.icon_msg.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(final View v) {
+                if (onItemClickListener != null) {
+                    int pos = holder.getLayoutPosition();
+                    onItemClickListener.onIconClick(holder.itemView, pos);
+                }
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
-        return mData == null ? 0 : mData.size();
+        return mPhones == null ? 0 : mPhones.size();
     }
 
     public interface OnItemClickListener {
         void onItemClick(View view, int position);
+
+        void onIconClick(View view, int position);
 
         void onItemLongClick(View view, int position);
     }
@@ -104,4 +113,6 @@ public class ContactDetailAdapter extends RecyclerView.Adapter<ContactDetailAdap
             phoneType = (TextView) itemView.findViewById(R.id.type_detail);
         }
     }
+
+
 }
