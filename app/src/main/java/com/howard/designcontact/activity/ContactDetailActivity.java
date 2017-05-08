@@ -173,7 +173,7 @@ public class ContactDetailActivity extends AppCompatActivity {
 
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_contact_detail,menu);
+        getMenuInflater().inflate(R.menu.menu_contact_detail, menu);
         return true;
     }
 
@@ -191,7 +191,7 @@ public class ContactDetailActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_detail_edit:
-                intent = new Intent(getApplicationContext(),ContactEditActivity.class);
+                intent = new Intent(getApplicationContext(), ContactEditActivity.class);
                 startActivity(intent);
                 return true;
             default:
