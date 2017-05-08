@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="type">
+        <item>手机</item>
+        <item>家庭</item>
+        <item>工作</item>
+        <item>其他</item>
+    </string-array>
+</resources>

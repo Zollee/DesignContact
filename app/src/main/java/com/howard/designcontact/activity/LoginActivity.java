@@ -3,7 +3,9 @@ package com.howard.designcontact.activity;
 import android.Manifest;
 import android.content.ContentUris;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -43,6 +45,10 @@ public class LoginActivity extends AppCompatActivity {
     SQLiteDatabase dbWrite;
     SQLiteDatabase dbRead;
 
+    private SharedPreferences preferences;
+    private SharedPreferences.Editor editor;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,7 +71,14 @@ public class LoginActivity extends AppCompatActivity {
                         MY_PERMISSIONS_REQUEST_READ_CONTACTS);
             }
         } else {
-            addContact();
+            preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+            if (preferences.getBoolean("firststart", true)) {
+                //判断首次启动
+                addContact();
+                editor = preferences.edit();
+                editor.putBoolean("firststart", false);
+                editor.apply();
+            }
             startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
         }
     }
