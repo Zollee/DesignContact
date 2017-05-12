@@ -3,6 +3,7 @@ package com.howard.designcontact.activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -10,6 +11,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.CollapsingToolbarLayout;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.graphics.Palette;
 import android.support.v7.widget.CardView;
@@ -37,6 +39,7 @@ import java.util.ArrayList;
 public class ContactDetailActivity extends AppCompatActivity {
     ContactOpenHelper contactOpenHelper;
     SQLiteDatabase dbRead;
+    SQLiteDatabase dbWrite;
     ImageView imageView;
     mContact contact;
     CardView mCardView;
@@ -56,6 +59,7 @@ public class ContactDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         contactOpenHelper = new ContactOpenHelper(getApplicationContext());
         dbRead = contactOpenHelper.getReadableDatabase();
+        dbWrite = contactOpenHelper.getWritableDatabase();
 
         contact = getIntent().getParcelableExtra("mContact");
 
@@ -181,8 +185,18 @@ public class ContactDetailActivity extends AppCompatActivity {
         Intent intent;
         switch (item.getItemId()) {
             case R.id.menu_detail_delete:
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
+                new  AlertDialog.Builder(this)
+                        .setMessage("确认删除？" )
+                        .setPositiveButton("是", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dbWrite.delete("phoneInfo","nameId=" + contact.getId(),null);
+                                dbWrite.delete("nameInfo","_id=" + contact.getId(),null);
+                                onBackPressed();
+                            }
+                        })
+                        .setNegativeButton("否" , null)
+                        .show();
                 return true;
 
             case R.id.menu_detail_star:

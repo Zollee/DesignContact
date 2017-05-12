@@ -22,7 +22,6 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
      */
     private ArrayList<mContact> mData;
 
-
     private ContactItemAdapter.OnItemClickListener onItemClickListener;
 
     public ContactItemAdapter(ArrayList<mContact> data) {

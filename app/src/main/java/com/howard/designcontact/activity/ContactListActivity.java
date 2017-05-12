@@ -68,8 +68,7 @@ public class ContactListActivity extends AppCompatActivity
 
         contactOpenHelper = new ContactOpenHelper(getApplicationContext());
 
-        initData();
-        initView();
+
     }
 
     private void initData() {
@@ -83,7 +82,7 @@ public class ContactListActivity extends AppCompatActivity
         mRecyclerView.setLayoutManager(mLayoutManager);
         // 设置adapter
         mRecyclerView.setAdapter(mAdapter);
-        mRecyclerView.addItemDecoration(new MyDividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+       // mRecyclerView.addItemDecoration(new MyDividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
         mAdapter.setOnItemClickListener(new ContactItemAdapter.OnItemClickListener() {
             @Override
@@ -101,6 +100,7 @@ public class ContactListActivity extends AppCompatActivity
     }
 
     private ArrayList<mContact> getData() {
+        mContacts.clear();
 
         dbRead = contactOpenHelper.getReadableDatabase();
         String[] COLUMN_NAME = new String[]{"_id", "name", "photoSmall", "photoLarge", "isStarred"};
@@ -135,6 +135,12 @@ public class ContactListActivity extends AppCompatActivity
         return mContacts;
     }
 
+    protected void onResume(){
+        super.onResume();
+
+        initData();
+        initView();
+    }
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
