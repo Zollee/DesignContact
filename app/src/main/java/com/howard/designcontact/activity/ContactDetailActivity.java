@@ -185,17 +185,18 @@ public class ContactDetailActivity extends AppCompatActivity {
         Intent intent;
         switch (item.getItemId()) {
             case R.id.menu_detail_delete:
-                new  AlertDialog.Builder(this)
-                        .setMessage("确认删除？" )
+                new AlertDialog.Builder(this)
+                        .setMessage("确认删除？")
                         .setPositiveButton("是", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                dbWrite.delete("phoneInfo","nameId=" + contact.getId(),null);
-                                dbWrite.delete("nameInfo","_id=" + contact.getId(),null);
+                                dbWrite.delete("phoneInfo", "nameId=" + contact.getId(), null);
+                                dbWrite.delete("nameInfo", "_id=" + contact.getId(), null);
+                                dbWrite.close();
                                 onBackPressed();
                             }
                         })
-                        .setNegativeButton("否" , null)
+                        .setNegativeButton("否", null)
                         .show();
                 return true;
 
@@ -206,6 +207,8 @@ public class ContactDetailActivity extends AppCompatActivity {
 
             case R.id.menu_detail_edit:
                 intent = new Intent(getApplicationContext(), ContactEditActivity.class);
+                intent.putExtra("mContact", contact);
+                intent.putExtra("mPhone", mPhones);
                 startActivity(intent);
                 return true;
             default:

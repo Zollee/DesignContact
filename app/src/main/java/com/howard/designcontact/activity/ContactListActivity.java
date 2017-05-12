@@ -22,7 +22,6 @@ import android.widget.Toast;
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactItemAdapter;
 import com.howard.designcontact.helper.ContactOpenHelper;
-import com.howard.designcontact.helper.MyDividerItemDecoration;
 import com.howard.designcontact.mContact;
 
 import java.text.Collator;
@@ -52,7 +51,7 @@ public class ContactListActivity extends AppCompatActivity
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(), ContactEditActivity.class);
+                Intent intent = new Intent(getApplicationContext(), ContactInsertActivity.class);
                 startActivity(intent);
             }
         });
@@ -82,7 +81,7 @@ public class ContactListActivity extends AppCompatActivity
         mRecyclerView.setLayoutManager(mLayoutManager);
         // 设置adapter
         mRecyclerView.setAdapter(mAdapter);
-       // mRecyclerView.addItemDecoration(new MyDividerItemDecoration(this, LinearLayoutManager.VERTICAL));
+        // mRecyclerView.addItemDecoration(new MyDividerItemDecoration(this, LinearLayoutManager.VERTICAL));
 
         mAdapter.setOnItemClickListener(new ContactItemAdapter.OnItemClickListener() {
             @Override
@@ -135,12 +134,13 @@ public class ContactListActivity extends AppCompatActivity
         return mContacts;
     }
 
-    protected void onResume(){
+    protected void onResume() {
         super.onResume();
 
         initData();
         initView();
     }
+
     @Override
     public void onBackPressed() {
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);

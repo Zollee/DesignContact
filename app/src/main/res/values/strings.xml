@@ -8,5 +8,6 @@
     <string name="title_activity_contact_detail">ContactDetailActivity</string>
     <string name="title_activity_contact_edit">编辑联系人</string>
     <string name="title_activity_main">MainActivity</string>
+    <string name="title_activity_contact_insert">新增联系人</string>
 
 </resources>
