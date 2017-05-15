@@ -59,9 +59,16 @@ public class ContactDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         contactOpenHelper = new ContactOpenHelper(getApplicationContext());
         dbRead = contactOpenHelper.getReadableDatabase();
-        dbWrite = contactOpenHelper.getWritableDatabase();
 
         contact = getIntent().getParcelableExtra("mContact");
+
+        String[] COLUMN_NAME = new String[]{"_id", "name", "photoLarge", "isStarred"};
+
+        Cursor cursor = dbRead.query("nameInfo", COLUMN_NAME, "_id=?", new String[]{"" + contact.getId()}, null, null, null, null);
+        cursor.moveToFirst();
+
+        contact.setName(cursor.getString(1));
+        contact.setPhotoDisplay(cursor.getBlob(2));
 
         //设置标题
         setContentView(R.layout.activity_contact_detail);
@@ -144,7 +151,6 @@ public class ContactDetailActivity extends AppCompatActivity {
 
     private ArrayList<mPhone> getData() {
         mPhone temp;
-        dbRead = contactOpenHelper.getReadableDatabase();
         String[] COLUMN_NAME = new String[]{"phoneNumber", "phoneType"};
 
         Cursor cursor = dbRead.query("phoneInfo", COLUMN_NAME, "nameId=?", new String[]{"" + contact.getId()}, null, null, null, null);
@@ -181,6 +187,8 @@ public class ContactDetailActivity extends AppCompatActivity {
 
     public boolean onOptionsItemSelected(MenuItem item) {
         Intent intent;
+        dbWrite = contactOpenHelper.getWritableDatabase();
+
         switch (item.getItemId()) {
             case R.id.menu_detail_delete:
                 new AlertDialog.Builder(this)

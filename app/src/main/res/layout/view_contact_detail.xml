@@ -30,7 +30,7 @@
             android:textSize="12sp"/>
     </LinearLayout>
 
-    <ImageView
+    <ImageButton
         android:id="@+id/image_msg"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

@@ -66,6 +66,9 @@ public class ContactListActivity extends AppCompatActivity
         navigationView.setNavigationItemSelectedListener(this);
 
         contactOpenHelper = new ContactOpenHelper(getApplicationContext());
+
+        initData();
+        initView();
     }
 
     private void initData() {
@@ -97,7 +100,7 @@ public class ContactListActivity extends AppCompatActivity
         mContacts.clear();
 
         dbRead = contactOpenHelper.getReadableDatabase();
-        String[] COLUMN_NAME = new String[]{"_id", "name", "photoSmall", "photoLarge", "isStarred"};
+        String[] COLUMN_NAME = new String[]{"_id", "name", "photoSmall", "isStarred"};
 
         mContact temp;
         Cursor cursor = dbRead.query("nameInfo", COLUMN_NAME, null, null, null, null, null, null);
@@ -109,9 +112,7 @@ public class ContactListActivity extends AppCompatActivity
                 temp.setId(cursor.getInt(0));
                 temp.setName(cursor.getString(1));
                 temp.setPhotoCore(cursor.getBlob(2));
-                temp.setPhotoDisplay(cursor.getBlob(3));
                 temp.photoSmall = temp.getPhotoSmall();
-                temp.photoLarge = temp.getPhotoLarge();
 
                 mContacts.add(temp);
             }
@@ -132,8 +133,7 @@ public class ContactListActivity extends AppCompatActivity
     protected void onResume() {
         super.onResume();
 
-        initData();
-        initView();
+        mAdapter.updateData(getData());
     }
 
     @Override

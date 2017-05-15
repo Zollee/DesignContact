@@ -18,8 +18,6 @@ public class mContact implements Parcelable {
             p.setName(source.readString());
             p.photoCore = new byte[source.readInt()];
             source.readByteArray(p.photoCore);
-            p.photoDisplay = new byte[source.readInt()];
-            source.readByteArray(p.photoDisplay);
 
             return p;
         }
@@ -45,8 +43,6 @@ public class mContact implements Parcelable {
         dest.writeString(name);
         dest.writeInt(photoCore.length);
         dest.writeByteArray(photoCore);
-        dest.writeInt(photoDisplay.length);
-        dest.writeByteArray(photoDisplay);
     }
 
 

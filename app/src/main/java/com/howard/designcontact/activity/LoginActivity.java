@@ -153,7 +153,7 @@ public class LoginActivity extends AppCompatActivity {
                     }
 
                 } else {
-                    contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_launcher);
+                    contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_person_white_48dp);
                     baos = new ByteArrayOutputStream();
                     contactPhoto.compress(Bitmap.CompressFormat.PNG, 100, baos);
                     img_small = baos.toByteArray();
