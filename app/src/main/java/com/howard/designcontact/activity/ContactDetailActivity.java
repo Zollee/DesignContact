@@ -106,7 +106,6 @@ public class ContactDetailActivity extends AppCompatActivity {
 
     private void initData() {
         mLayoutManager = new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false);
-
         mAdapter = new ContactDetailAdapter(getData());
     }
 
@@ -154,7 +153,7 @@ public class ContactDetailActivity extends AppCompatActivity {
             while (cursor.moveToNext()) {
                 temp = new mPhone();
                 temp.setPhone(cursor.getString(0));
-                temp.setType(cursor.getString(1));
+                temp.setType(cursor.getInt(1));
 
                 mPhones.add(temp);
             }
@@ -176,7 +175,6 @@ public class ContactDetailActivity extends AppCompatActivity {
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
         getMenuInflater().inflate(R.menu.menu_contact_detail, menu);
         return true;
     }
@@ -201,8 +199,7 @@ public class ContactDetailActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_detail_star:
-                // User chose the "Favorite" action, mark the current item
-                // as a favorite...
+
                 return true;
 
             case R.id.menu_detail_edit:
@@ -212,8 +209,6 @@ public class ContactDetailActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
             default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
                 return super.onOptionsItemSelected(item);
         }
     }

@@ -25,7 +25,7 @@ public class ContactOpenHelper extends SQLiteOpenHelper {
                 "id integer primary key," +
                 "nameId integer," +
                 "phoneNumber text," +
-                "phoneType text," +
+                "phoneType integer," +
                 "FOREIGN KEY(nameId) REFERENCES nameInfo(_id))");
     }
 

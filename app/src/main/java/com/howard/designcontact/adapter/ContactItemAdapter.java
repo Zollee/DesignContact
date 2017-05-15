@@ -96,7 +96,6 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
         public ViewHolder(View itemView) {
             super(itemView);
             mName = (TextView) itemView.findViewById(R.id.item_list_name);
-            //  mPhone = (TextView) itemView.findViewById(R.id.item_list_phone);
             mPic = (ImageView) itemView.findViewById(R.id.item_list_pic);
         }
     }

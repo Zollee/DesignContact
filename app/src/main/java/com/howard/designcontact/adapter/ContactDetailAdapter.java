@@ -52,7 +52,21 @@ public class ContactDetailAdapter extends RecyclerView.Adapter<ContactDetailAdap
     public void onBindViewHolder(final ContactDetailAdapter.ViewHolder holder, final int position) {
         // 绑定数据
         holder.phoneNumber.setText(mPhones.get(position).getPhone());
-        holder.phoneType.setText(mPhones.get(position).getType());
+
+        switch (mPhones.get(position).getType()) {
+            case 0:
+                holder.phoneType.setText("手机");
+                break;
+            case 1:
+                holder.phoneType.setText("家庭");
+                break;
+            case 2:
+                holder.phoneType.setText("工作");
+                break;
+            case 3:
+                holder.phoneType.setText("其他");
+                break;
+        }
 
         holder.phoneNumber.setOnClickListener(new View.OnClickListener() {
             @Override

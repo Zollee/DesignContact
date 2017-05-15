@@ -88,7 +88,7 @@ public class LoginActivity extends AppCompatActivity {
         String phoneName;
         String phoneNumber;
         int typeTemp;
-        String phoneType;
+        int phoneType;
 
         Long contactId;
         Long photoId;
@@ -119,17 +119,18 @@ public class LoginActivity extends AppCompatActivity {
 
                 //将分类转换
                 switch (typeTemp) {
-                    case Phone.TYPE_HOME:
-                        phoneType = "家庭";
-                        break;
                     case Phone.TYPE_MOBILE:
-                        phoneType = "手机";
+                        phoneType = 0;
                         break;
+                    case Phone.TYPE_HOME:
+                        phoneType = 1;
+                        break;
+
                     case Phone.TYPE_WORK:
-                        phoneType = "工作";
+                        phoneType = 2;
                         break;
                     default:
-                        phoneType = "其他";
+                        phoneType = 3;
                 }
 
                 //获得头像
@@ -219,16 +220,10 @@ public class LoginActivity extends AppCompatActivity {
                         && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     addContact();
                     startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
-                    // permission was granted, yay! Do the
-                    // contacts-related task you need to do.
                 } else {
                     finish();
-                    // permission denied, boo! Disable the
-                    // functionality that depends on this permission.
                 }
             }
         }
     }
-
-
 }

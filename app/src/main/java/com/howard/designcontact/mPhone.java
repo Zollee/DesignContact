@@ -13,7 +13,7 @@ public class mPhone implements Parcelable {
             // 必须按成员变量声明的顺序读取数据，不然会出现获取数据出错
             mPhone p = new mPhone();
             p.setPhone(source.readString());
-            p.setType(source.readString());
+            p.setType(source.readInt());
 
             return p;
         }
@@ -24,7 +24,7 @@ public class mPhone implements Parcelable {
         }
     };
     private String phone;
-    private String type;
+    private int type;
 
     public String getPhone() {
         return phone;
@@ -34,11 +34,11 @@ public class mPhone implements Parcelable {
         this.phone = phone;
     }
 
-    public String getType() {
+    public int getType() {
         return type;
     }
 
-    public void setType(String type) {
+    public void setType(int type) {
         this.type = type;
     }
 
@@ -47,7 +47,7 @@ public class mPhone implements Parcelable {
         // 1.必须按成员变量声明的顺序封装数据，不然会出现获取数据出错
         // 2.序列化对象
         dest.writeString(phone);
-        dest.writeString(type);
+        dest.writeInt(type);
 
     }
 

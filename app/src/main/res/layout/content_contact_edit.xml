@@ -33,8 +33,10 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
+            android:layout_marginEnd="8dp"
             android:layout_marginLeft="8dp"
             android:layout_marginRight="8dp"
+            android:layout_marginStart="8dp"
             android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintHorizontal_bias="0.0"
@@ -61,6 +63,7 @@
                     android:layout_gravity="center"
                     android:layout_margin="@dimen/activity_vertical_margin"
                     android:hint="姓名"/>
+
             </LinearLayout>
 
             <LinearLayout
@@ -83,49 +86,17 @@
                     android:layout_height="wrap_content"
                     android:orientation="vertical">
 
-                    <LinearLayout
+                    <android.support.v7.widget.RecyclerView
+                        android:id="@+id/recycler_contact_edit"
                         android:layout_width="match_parent"
+                        android:layout_height="wrap_content"/>
+
+                    <Button
+                        android:id="@+id/button_edit_add"
+                        style="@style/Widget.AppCompat.Button.Borderless.Colored"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <EditText
-                            android:id="@+id/edit_number_text"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_margin="@dimen/activity_vertical_margin"
-                            android:hint="电话"
-                            android:inputType="phone"/>
-
-                        <Spinner
-                            android:id="@+id/spinner"
-                            android:layout_width="150dp"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="@dimen/activity_vertical_margin"
-                            android:entries="@array/type"/>
-                    </LinearLayout>
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:orientation="vertical">
-
-                        <EditText
-                            android:id="@+id/edit_number_text2"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_gravity="center"
-                            android:layout_margin="@dimen/activity_vertical_margin"
-                            android:hint="电话"
-                            android:inputType="phone"/>
-
-                        <Spinner
-                            android:id="@+id/spinner2"
-                            android:layout_width="150dp"
-                            android:layout_height="wrap_content"
-                            android:layout_margin="@dimen/activity_vertical_margin"
-                            android:entries="@array/type"/>
-                    </LinearLayout>
+                        android:text="添加新电话"/>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>
