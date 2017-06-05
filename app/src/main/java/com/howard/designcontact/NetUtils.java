@@ -9,6 +9,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+
 
 /**
  * Created by Howard on 06/01/2017.
@@ -22,11 +24,16 @@ public class NetUtils {
             URL mURL = new URL(url);
             // 调用URL的openConnection()方法,获取HttpURLConnection对象
             conn = (HttpURLConnection) mURL.openConnection();
+            conn.setRequestProperty("accept", "*/*");
+            conn.setRequestProperty("connection", "Keep-Alive");
+            conn.setRequestProperty("user-agent",
+                    "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1;SV1)");
 
             conn.setRequestMethod("POST");// 设置请求方法为post
             conn.setReadTimeout(5000);// 设置读取超时为5秒
             conn.setConnectTimeout(10000);// 设置连接网络超时为10秒
             conn.setDoOutput(true);// 设置此方法,允许向服务器输出内容
+            conn.setDoInput(true);
 
             // post请求的参数
             String data = content;
@@ -70,7 +77,6 @@ public class NetUtils {
 
             int responseCode = conn.getResponseCode();
             if (responseCode == 200) {
-                Log.d("test", "返回200");
                 InputStream is = conn.getInputStream();
                 String response = getStringFromInputStream(is);
                 return response;

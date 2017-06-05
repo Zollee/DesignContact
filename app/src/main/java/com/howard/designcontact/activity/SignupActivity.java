@@ -4,12 +4,19 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.content.ContentUris;
+import android.content.ContentValues;
+import android.content.Context;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -17,6 +24,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -26,9 +34,20 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
+import com.howard.designcontact.AsynNetUtils;
+import com.howard.designcontact.NetUtils;
 import com.howard.designcontact.R;
+import com.howard.designcontact.helper.ContactOpenHelper;
+import com.howard.designcontact.proto.Data;
+import com.howard.designcontact.proto.Person;
+import com.howard.designcontact.proto.Phone;
 
+import org.apache.commons.io.IOUtils;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -48,24 +67,34 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
      * A dummy authentication store containing known user names and passwords.
      * TODO: remove after connecting to a real authentication system.
      */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
+
+    private static final String[] PHONES_PROJECTION = new String[]{
+            ContactsContract.CommonDataKinds.Phone.DISPLAY_NAME,
+            ContactsContract.CommonDataKinds.Phone.NUMBER,
+            ContactsContract.CommonDataKinds.Phone.TYPE,
+            ContactsContract.CommonDataKinds.Photo.PHOTO_ID,
+            ContactsContract.CommonDataKinds.Phone.CONTACT_ID
     };
+    ContactOpenHelper contactOpenHelper;
+    SQLiteDatabase dbWrite;
+    SQLiteDatabase dbRead;
     /**
      * Keep track of the login task to ensure we can cancel it if requested.
      */
-    private UserLoginTask mAuthTask = null;
-
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
+    private SharedPreferences preferences;
+    private SharedPreferences.Editor editor;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+
+        contactOpenHelper = new ContactOpenHelper(getApplicationContext());
 
         setContentView(R.layout.activity_signup);
         // Set up the login form.
@@ -146,17 +175,13 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
      * errors are presented and no actual login attempt is made.
      */
     private void attemptLogin() {
-        if (mAuthTask != null) {
-            return;
-        }
-
         // Reset errors.
         mEmailView.setError(null);
         mPasswordView.setError(null);
 
         // Store values at the time of the login attempt.
-        String email = mEmailView.getText().toString();
-        String password = mPasswordView.getText().toString();
+        final String email = mEmailView.getText().toString();
+        final String password = mPasswordView.getText().toString();
 
         boolean cancel = false;
         View focusView = null;
@@ -187,8 +212,33 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
             // Show a progress spinner, and kick off a background task to
             // perform the user login attempt.
             showProgress(true);
-            mAuthTask = new UserLoginTask(email, password);
-            mAuthTask.execute((Void) null);
+
+            AsynNetUtils.get("http://47.94.97.91/demo/signup?username=" + email + "&password=" + password, new AsynNetUtils.Callback() {
+                @Override
+                public void onResponse(String response) {
+                    Log.d("info", response);
+
+                    if (response.equals("注册成功")) {
+                        preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+
+                        editor = preferences.edit();
+                        editor.putBoolean("login", true);
+                        editor.putString("username", email);
+                        editor.putString("password", password);
+                        editor.apply();
+
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                addContact();
+                                updateToCloud();
+                            }
+                        }).start();
+                    } else
+                        Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
+                }
+            });
+
         }
     }
 
@@ -207,35 +257,25 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
      */
     @TargetApi(Build.VERSION_CODES.HONEYCOMB_MR2)
     private void showProgress(final boolean show) {
-        // On Honeycomb MR2 we have the ViewPropertyAnimator APIs, which allow
-        // for very easy animations. If available, use these APIs to fade-in
-        // the progress spinner.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB_MR2) {
-            int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
+        int shortAnimTime = getResources().getInteger(android.R.integer.config_shortAnimTime);
 
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-            mLoginFormView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-                }
-            });
+        mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+        mLoginFormView.animate().setDuration(shortAnimTime).alpha(
+                show ? 0 : 1).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
+            }
+        });
 
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mProgressView.animate().setDuration(shortAnimTime).alpha(
-                    show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-                }
-            });
-        } else {
-            // The ViewPropertyAnimator APIs are not available, so simply show
-            // and hide the relevant UI components.
-            mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
-            mLoginFormView.setVisibility(show ? View.GONE : View.VISIBLE);
-        }
+        mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+        mProgressView.animate().setDuration(shortAnimTime).alpha(
+                show ? 1 : 0).setListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                mProgressView.setVisibility(show ? View.VISIBLE : View.GONE);
+            }
+        });
     }
 
     @Override
@@ -281,6 +321,204 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
         mEmailView.setAdapter(adapter);
     }
 
+    //添加联系人到本地
+    public void addContact() {
+        Cursor cursor = getContentResolver().query(ContactsContract.CommonDataKinds.Phone.CONTENT_URI, PHONES_PROJECTION, null, null, null);
+        String phoneName;
+        String phoneNumber;
+        int typeTemp;
+        int phoneType;
+
+        Long contactId;
+        Long photoId;
+
+        Bitmap contactPhoto;
+        ByteArrayOutputStream baos;
+        byte[] img_small = null;
+        byte[] img_large = null;
+        ContentValues values;
+
+        String[] COLUMN_NAME = new String[]{"_id", "name", "photoSmall", "photoLarge", "isStarred"};
+        String[] COLUMN_PHONE = new String[]{"id", "nameId", "phoneNumber", "phoneType"};
+
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                //获取姓名
+                phoneName = cursor.getString(0);
+
+                //获取电话
+                phoneNumber = cursor.getString(1);
+
+                //获取分类
+                typeTemp = cursor.getInt(2);
+
+                //获取头像id
+                photoId = cursor.getLong(3);
+                contactId = cursor.getLong(4);
+
+                //将分类转换
+                switch (typeTemp) {
+                    case ContactsContract.CommonDataKinds.Phone.TYPE_MOBILE:
+                        phoneType = 0;
+                        break;
+                    case ContactsContract.CommonDataKinds.Phone.TYPE_HOME:
+                        phoneType = 1;
+                        break;
+
+                    case ContactsContract.CommonDataKinds.Phone.TYPE_WORK:
+                        phoneType = 2;
+                        break;
+                    default:
+                        phoneType = 3;
+                }
+
+                //获得头像
+                if (photoId > 0) {
+                    Uri contactUri = ContentUris.withAppendedId(ContactsContract.Contacts.CONTENT_URI, contactId);
+                    InputStream input = ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), contactUri);
+
+                    try {
+                        img_small = IOUtils.toByteArray(input);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                    input = ContactsContract.Contacts.openContactPhotoInputStream(getContentResolver(), contactUri, true);
+
+                    try {
+                        img_large = IOUtils.toByteArray(input);
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+
+                } else {
+                    contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_person_white_48dp);
+                    baos = new ByteArrayOutputStream();
+                    contactPhoto.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                    img_small = baos.toByteArray();
+                    img_large = img_small;
+                }
+
+                dbRead = contactOpenHelper.getReadableDatabase();
+                dbWrite = contactOpenHelper.getWritableDatabase();
+
+                try {
+                    values = new ContentValues();
+
+                    Cursor cursorTemp;
+                    cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{"" + phoneName}, null, null, null);
+
+                    if (cursorTemp.getCount() == 0) {
+                        //无重名
+                        values.put("name", phoneName);
+                        values.put("photoSmall", img_small);
+                        values.put("photoLarge", img_large);
+                        dbWrite.insert("nameInfo", null, values);
+
+                        cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{"" + phoneName}, null, null, null, null);
+
+                        cursorTemp.moveToFirst();
+                        values = new ContentValues();
+                        values.put("nameId", cursorTemp.getInt(0));
+                        values.put("phoneNumber", phoneNumber);
+                        values.put("phoneType", phoneType);
+                        dbWrite.insert("phoneInfo", null, values);
+                    } else {
+                        //有重名，检测电话
+                        cursorTemp = dbRead.query("phoneInfo", COLUMN_PHONE, "phoneNumber=?", new String[]{"" + phoneNumber}, null, null, null, null);
+                        if (cursorTemp.getCount() == 0) {
+                            //重名，新号码
+                            cursorTemp = dbRead.query("nameInfo", COLUMN_NAME, "name=?", new String[]{"" + phoneName}, null, null, null, null);
+
+                            cursorTemp.moveToFirst();
+                            values = new ContentValues();
+                            values.put("nameId", cursorTemp.getInt(0));
+                            values.put("phoneNumber", phoneNumber);
+                            values.put("phoneType", phoneType);
+                            dbWrite.insert("phoneInfo", null, values);
+                        }
+                    }
+
+                    dbWrite.delete("phoneInfo", "nameId>20", null);
+                    dbWrite.delete("nameInfo", "_id>20", null);
+
+                    cursorTemp.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    dbWrite.close();
+                    dbRead.close();
+                }
+            }
+            cursor.close();
+        }
+    }
+
+    //上传联系人数据
+    public void updateToCloud() {
+        dbRead = contactOpenHelper.getReadableDatabase();
+
+        String[] COLUMN_NAME = new String[]{"_id", "name", "photoSmall", "photoLarge", "isStarred"};
+        String[] COLUMN_PHONE = new String[]{"id", "nameId", "phoneNumber", "phoneType"};
+
+        Cursor cursor = dbRead.query("nameInfo", COLUMN_NAME, null, null, null, null, null, null);
+
+        List<Person> personList = new ArrayList<>();
+        if (cursor != null) {
+            preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+
+            while (cursor.moveToNext()) {
+                    Person temp = new Person.Builder()
+                            .id(cursor.getInt(0))
+                            .name(cursor.getString(1))
+                            .photoSmall("2")
+                            .photoLarge("3")
+                            .isStarred(cursor.getInt(4))
+                            .build();
+                    personList.add(temp);
+            }
+        }
+
+        cursor = dbRead.query("phoneInfo", COLUMN_PHONE, null, null, null, null, null, null);
+        List<Phone> phoneList = new ArrayList<>();
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                Phone temp = new Phone.Builder()
+                        .id(cursor.getInt(0))
+                        .nameId(cursor.getInt(1))
+                        .number(cursor.getString(2))
+                        .type(cursor.getInt(3))
+                        .build();
+                phoneList.add(temp);
+            }
+        }
+
+        cursor.close();
+
+        Data data = new Data.Builder()
+                .user(preferences.getString("username", ""))
+                .persons(personList)
+                .phoned(phoneList)
+                .build();
+        Log.d("data", data.user);
+
+        byte[] dataBytes = Data.ADAPTER.encode(data);
+
+        String dataString = new String(dataBytes).replace("%","%25");
+        Log.d("DataString", dataString);
+
+        String response = NetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString);
+        startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+
+/*
+                if (response.equals("注册成功")) {
+                    startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+                }else
+                    Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
+
+*/
+
+    }
 
     private interface ProfileQuery {
         String[] PROJECTION = {
@@ -289,64 +527,6 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
         };
 
         int ADDRESS = 0;
-        int IS_PRIMARY = 1;
-    }
-
-    /**
-     * Represents an asynchronous login/registration task used to authenticate
-     * the user.
-     */
-    public class UserLoginTask extends AsyncTask<Void, Void, Boolean> {
-
-        private final String mEmail;
-        private final String mPassword;
-
-        UserLoginTask(String email, String password) {
-            mEmail = email;
-            mPassword = password;
-        }
-
-        @Override
-        protected Boolean doInBackground(Void... params) {
-            // TODO: attempt authentication against a network service.
-
-            try {
-                // Simulate network access.
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                return false;
-            }
-
-            for (String credential : DUMMY_CREDENTIALS) {
-                String[] pieces = credential.split(":");
-                if (pieces[0].equals(mEmail)) {
-                    // Account exists, return true if the password matches.
-                    return pieces[1].equals(mPassword);
-                }
-            }
-
-            // TODO: register the new account here.
-            return true;
-        }
-
-        @Override
-        protected void onPostExecute(final Boolean success) {
-            mAuthTask = null;
-            showProgress(false);
-
-            if (success) {
-                finish();
-            } else {
-                mPasswordView.setError(getString(R.string.error_incorrect_password));
-                mPasswordView.requestFocus();
-            }
-        }
-
-        @Override
-        protected void onCancelled() {
-            mAuthTask = null;
-            showProgress(false);
-        }
     }
 }
 

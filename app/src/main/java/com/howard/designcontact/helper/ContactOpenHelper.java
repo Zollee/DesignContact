@@ -19,7 +19,7 @@ public class ContactOpenHelper extends SQLiteOpenHelper {
                 "name text UNIQUE," +
                 "photoSmall BLOB," +
                 "photoLarge BLOB," +
-                "isStarred integer DEFAULT '0')");
+                "isStarred integer DEFAULT 0)");
 
         db.execSQL("create table phoneInfo(" +
                 "id integer primary key," +
