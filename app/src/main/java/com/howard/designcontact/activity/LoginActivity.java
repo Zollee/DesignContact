@@ -4,6 +4,7 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.annotation.TargetApi;
 import android.app.LoaderManager.LoaderCallbacks;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
 import android.content.Intent;
@@ -11,8 +12,10 @@ import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.ContactsContract;
@@ -32,9 +35,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.howard.designcontact.AsynNetUtils;
+import com.howard.designcontact.helper.AsynNetUtils;
+import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.R;
+import com.howard.designcontact.helper.ContactOpenHelper;
+import com.howard.designcontact.proto.Data;
+import com.howard.designcontact.proto.Person;
+import com.howard.designcontact.proto.Phone;
 
+import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,21 +58,13 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
      * Id to identity READ_CONTACTS permission request.
      */
     private static final int REQUEST_READ_CONTACTS = 0;
-
-    /**
-     * A dummy authentication store containing known user names and passwords.
-     * TODO: remove after connecting to a real authentication system.
-     */
-    private static final String[] DUMMY_CREDENTIALS = new String[]{
-            "foo@example.com:hello", "bar@example.com:world"
-    };
-
+    ContactOpenHelper contactOpenHelper;
+    SQLiteDatabase dbWrite;
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
     private View mProgressView;
     private View mLoginFormView;
-
     private SharedPreferences preferences;
     private SharedPreferences.Editor editor;
 
@@ -71,6 +72,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         getWindow().setStatusBarColor(getResources().getColor(R.color.colorPrimaryDark));
+
+        contactOpenHelper = new ContactOpenHelper(getApplicationContext());
 
         setContentView(R.layout.activity_login);
         // Set up the login form.
@@ -200,9 +203,16 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                         editor.putString("password", password);
                         editor.apply();
 
-                        startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
-                    } else
+                        new Thread(new Runnable() {
+                            @Override
+                            public void run() {
+                                downloadFromCloud();
+                            }
+                        }).start();
+                    } else {
                         Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
+                        showProgress(false);
+                    }
                 }
             });
 
@@ -292,6 +302,44 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         mEmailView.setAdapter(adapter);
     }
 
+    public void downloadFromCloud() {
+        String response = NetUtils.get("http://47.94.97.91/demo/downloadDatabase?username=" + preferences.getString("username", ""));
+        try {
+            Data data = Data.ADAPTER.decode(response.replace("%25", "%").getBytes());
+            dbWrite = contactOpenHelper.getWritableDatabase();
+            ContentValues values;
+
+            Bitmap contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_person_white_48dp);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            contactPhoto.compress(Bitmap.CompressFormat.PNG, 100, baos);
+
+            for (Person temp : data.persons) {
+                values = new ContentValues();
+                values.put("_id", temp.id);
+                values.put("name", temp.name);
+                values.put("photoSmall", baos.toByteArray());
+                values.put("photoLarge", baos.toByteArray());
+                values.put("isStarred", temp.isStarred);
+                dbWrite.insert("nameInfo", null, values);
+            }
+
+            for (Phone temp : data.phoned) {
+                values = new ContentValues();
+                values.put("id", temp.id);
+                values.put("nameId", temp.nameId);
+                values.put("phoneNumber", temp.number);
+                values.put("phoneType", temp.type);
+                dbWrite.insert("phoneInfo", null, values);
+            }
+
+            dbWrite.close();
+
+            startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+    }
 
     private interface ProfileQuery {
         String[] PROJECTION = {

@@ -1,8 +1,10 @@
 package com.howard.designcontact.activity;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -17,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -25,15 +28,20 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
+import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactEditAdapter;
 import com.howard.designcontact.helper.ContactOpenHelper;
 import com.howard.designcontact.helper.MyDividerItemDecoration;
 import com.howard.designcontact.mPhone;
+import com.howard.designcontact.proto.Data;
+import com.howard.designcontact.proto.Person;
+import com.howard.designcontact.proto.Phone;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ContactInsertActivity extends AppCompatActivity {
 
@@ -48,6 +56,8 @@ public class ContactInsertActivity extends AppCompatActivity {
     ImageView mImageView_photo;
     EditText mEditText_name;
     ImageButton mImageButton_select_photo;
+    private SharedPreferences preferences;
+
     private Uri imageUri;
     private RecyclerView mRecyclerView;
     private ContactEditAdapter mAdapter;
@@ -243,20 +253,60 @@ public class ContactInsertActivity extends AppCompatActivity {
 
                 cursorTemp = dbRead.query("nameInfo", new String[]{"_id"}, "name=?", new String[]{"" + name}, null, null, null);
                 cursorTemp.moveToFirst();
-
+                int nameId = cursorTemp.getInt(0);
                 //插入数据
                 for (int i = 0; i < mPhones.size(); i++) {
                     values = new ContentValues();
-                    values.put("nameId", cursorTemp.getInt(0));
+                    values.put("nameId", nameId);
                     values.put("phoneNumber", mPhones.get(i).getPhone());
                     values.put("phoneType", mPhones.get(i).getType());
                     dbWrite.insert("phoneInfo", null, values);
                 }
-                dbWrite.close();
-                dbRead.close();
+
+                Person temp = new Person.Builder()
+                        .id(nameId)
+                        .name(name)
+                        .isStarred(0)
+                        .build();
+
+                List<Person> personList = new ArrayList<>();
+                personList.add(temp);
+
+                cursorTemp = dbRead.query("phoneInfo", new String[]{"id", "phoneNumber", "phoneType"}, "nameId=?", new String[]{"" + nameId}, null, null, null);
+                List<Phone> phoneList = new ArrayList<>();
+                while (cursorTemp.moveToNext()) {
+                    Phone temp2 = new Phone.Builder()
+                            .id(cursorTemp.getInt(0))
+                            .nameId(nameId)
+                            .number(cursorTemp.getString(1))
+                            .type(cursorTemp.getInt(2))
+                            .build();
+                    phoneList.add(temp2);
+                }
                 cursorTemp.close();
 
-                startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+                preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+                Data data = new Data.Builder()
+                        .user(preferences.getString("username", null))
+                        .persons(personList)
+                        .phoned(phoneList)
+                        .build();
+
+                byte[] dataBytes = Data.ADAPTER.encode(data);
+
+                String dataString = new String(dataBytes).replace("%", "%25");
+
+                AsynNetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString, new AsynNetUtils.Callback() {
+                    @Override
+                    public void onResponse(String response) {
+                        if (response.equals("注册成功")) {
+                            dbRead.close();
+                            dbWrite.close();
+                            startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+                        } else
+                            Log.d("response", response);
+                    }
+                });
 
                 return true;
             default:

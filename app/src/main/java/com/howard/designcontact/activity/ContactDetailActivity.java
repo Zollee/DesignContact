@@ -5,6 +5,7 @@ import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
@@ -27,6 +28,7 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactDetailAdapter;
 import com.howard.designcontact.helper.ContactOpenHelper;
@@ -44,6 +46,7 @@ public class ContactDetailActivity extends AppCompatActivity {
     mContact contact;
     CardView mCardView;
     CollapsingToolbarLayout mToolBarLayout;
+    private SharedPreferences preferences;
 
     private RecyclerView mRecyclerView;
     private ContactDetailAdapter mAdapter;
@@ -196,10 +199,19 @@ public class ContactDetailActivity extends AppCompatActivity {
                         .setPositiveButton("是", new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                dbWrite.delete("phoneInfo", "nameId=" + contact.getId(), null);
-                                dbWrite.delete("nameInfo", "_id=" + contact.getId(), null);
-                                dbWrite.close();
-                                onBackPressed();
+                                preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+                                AsynNetUtils.post("http://47.94.97.91/demo/delete", "username=" + preferences.getString("username", "") + "&Id=" + contact.getId(), new AsynNetUtils.Callback() {
+                                    @Override
+                                    public void onResponse(String response) {
+                                        if (response.equals("删除成功")) {
+                                            dbWrite.delete("phoneInfo", "nameId=" + contact.getId(), null);
+                                            dbWrite.delete("nameInfo", "_id=" + contact.getId(), null);
+                                            dbWrite.close();
+                                            onBackPressed();
+                                        } else
+                                            Toast.makeText(getApplicationContext(), "删除失败", Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                             }
                         })
                         .setNegativeButton("否", null)

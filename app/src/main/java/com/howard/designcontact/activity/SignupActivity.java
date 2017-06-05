@@ -36,8 +36,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.howard.designcontact.AsynNetUtils;
-import com.howard.designcontact.NetUtils;
+import com.howard.designcontact.helper.AsynNetUtils;
+import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.helper.ContactOpenHelper;
 import com.howard.designcontact.proto.Data;
@@ -134,9 +134,6 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
     }
 
     private boolean mayRequestContacts() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) {
-            return true;
-        }
         if (checkSelfPermission(READ_CONTACTS) == PackageManager.PERMISSION_GRANTED) {
             return true;
         }
@@ -468,14 +465,12 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
             preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
 
             while (cursor.moveToNext()) {
-                    Person temp = new Person.Builder()
-                            .id(cursor.getInt(0))
-                            .name(cursor.getString(1))
-                            .photoSmall("2")
-                            .photoLarge("3")
-                            .isStarred(cursor.getInt(4))
-                            .build();
-                    personList.add(temp);
+                Person temp = new Person.Builder()
+                        .id(cursor.getInt(0))
+                        .name(cursor.getString(1))
+                        .isStarred(cursor.getInt(4))
+                        .build();
+                personList.add(temp);
             }
         }
 
@@ -504,20 +499,14 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
 
         byte[] dataBytes = Data.ADAPTER.encode(data);
 
-        String dataString = new String(dataBytes).replace("%","%25");
+        String dataString = new String(dataBytes).replace("%", "%25");
         Log.d("DataString", dataString);
 
         String response = NetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString);
-        startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
-
-/*
-                if (response.equals("注册成功")) {
-                    startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
-                }else
-                    Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
-
-*/
-
+        if (response.equals("注册成功")) {
+            startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+        } else
+            Log.d("response", response);
     }
 
     private interface ProfileQuery {

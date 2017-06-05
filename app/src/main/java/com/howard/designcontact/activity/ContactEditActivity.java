@@ -1,8 +1,10 @@
 package com.howard.designcontact.activity;
 
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -17,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,17 +27,24 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.Toast;
 
+import com.howard.designcontact.helper.AsynNetUtils;
+import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactEditAdapter;
 import com.howard.designcontact.helper.ContactOpenHelper;
 import com.howard.designcontact.helper.MyDividerItemDecoration;
 import com.howard.designcontact.mContact;
 import com.howard.designcontact.mPhone;
+import com.howard.designcontact.proto.Data;
+import com.howard.designcontact.proto.Person;
+import com.howard.designcontact.proto.Phone;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
 public class ContactEditActivity extends AppCompatActivity {
 
@@ -50,6 +60,8 @@ public class ContactEditActivity extends AppCompatActivity {
     SQLiteDatabase dbRead;
     ImageView mImageView_photo;
     EditText mEditText_name;
+    private SharedPreferences preferences;
+
     private Uri imageUri;
     private RecyclerView mRecyclerView;
     private ContactEditAdapter mAdapter;
@@ -191,7 +203,7 @@ public class ContactEditActivity extends AppCompatActivity {
         ContentValues values;
         switch (item.getItemId()) {
             case R.id.menu_check:
-                String name = mEditText_name.getText().toString();
+                final String name = mEditText_name.getText().toString();
                 //检测姓名
                 if (name.equals("")) {
                     new AlertDialog.Builder(this)
@@ -263,9 +275,62 @@ public class ContactEditActivity extends AppCompatActivity {
                     values.put("phoneType", mPhones.get(i).getType());
                     dbWrite.insert("phoneInfo", null, values);
                 }
-                dbWrite.close();
 
-                startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+                preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+                AsynNetUtils.post("http://47.94.97.91/demo/delete", "username=" + preferences.getString("username", "") + "&Id=" + contact.getId(), new AsynNetUtils.Callback() {
+                    @Override
+                    public void onResponse(String response) {
+                        if (response.equals("删除成功")) {
+                            Person temp = new Person.Builder()
+                                    .id(contact.getId())
+                                    .name(name)
+                                    .isStarred(0)
+                                    .build();
+                            List<Person> personList = new ArrayList<>();
+                            personList.add(temp);
+
+                            Cursor cursorTemp = dbRead.query("phoneInfo", new String[]{"id", "phoneNumber", "phoneType"}, "nameId=?", new String[]{"" + contact.getId()}, null, null, null);
+                            List<Phone> phoneList = new ArrayList<>();
+                            while (cursorTemp.moveToNext()) {
+                                Phone temp2 = new Phone.Builder()
+                                        .id(cursorTemp.getInt(0))
+                                        .nameId(contact.getId())
+                                        .number(cursorTemp.getString(1))
+                                        .type(cursorTemp.getInt(2))
+                                        .build();
+                                phoneList.add(temp2);
+                            }
+                            cursorTemp.close();
+
+                            Data data = new Data.Builder()
+                                    .user(preferences.getString("username", null))
+                                    .persons(personList)
+                                    .phoned(phoneList)
+                                    .build();
+
+                            byte[] dataBytes = Data.ADAPTER.encode(data);
+
+                            final String dataString = new String(dataBytes).replace("%", "%25");
+
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    String response = NetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString);
+                                    if (response.equals("注册成功")) {
+                                        dbWrite.close();
+                                        dbRead.close();
+                                        startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+                                    } else
+                                        Log.d("response", response);
+                                }
+                            }).start();
+
+                        } else
+                            Toast.makeText(getApplicationContext(), "删除失败", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+
 
                 return true;
             default:
