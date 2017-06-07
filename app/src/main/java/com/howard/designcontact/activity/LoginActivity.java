@@ -7,14 +7,11 @@ import android.app.LoaderManager.LoaderCallbacks;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
-import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,6 +20,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -35,15 +33,15 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.howard.designcontact.helper.AsynNetUtils;
-import com.howard.designcontact.helper.NetUtils;
+import com.howard.designcontact.Debug;
 import com.howard.designcontact.R;
+import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.helper.ContactOpenHelper;
+import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.proto.Data;
 import com.howard.designcontact.proto.Person;
 import com.howard.designcontact.proto.Phone;
 
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -60,6 +58,8 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
     private static final int REQUEST_READ_CONTACTS = 0;
     ContactOpenHelper contactOpenHelper;
     SQLiteDatabase dbWrite;
+    SQLiteDatabase dbRead;
+    ContentValues values;
     // UI references.
     private AutoCompleteTextView mEmailView;
     private EditText mPasswordView;
@@ -203,12 +203,38 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                         editor.putString("password", password);
                         editor.apply();
 
-                        new Thread(new Runnable() {
+                        Thread thread = new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 downloadFromCloud();
                             }
-                        }).start();
+                        });
+                        thread.start();
+
+                        try {
+                            thread.join();
+                            dbRead = contactOpenHelper.getReadableDatabase();
+                            final Cursor cursorTemp;
+                            cursorTemp = dbRead.query("nameInfo", new String[]{"_id"}, null, null, null, null, null);
+                            if (cursorTemp != null) {
+                                while (cursorTemp.moveToNext()) {
+
+                                    Thread thread2 = new Thread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            downloadPhoto(cursorTemp.getInt(0));
+                                        }
+                                    });
+                                    thread2.start();
+                                    thread2.join();
+
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+
+
                     } else {
                         Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
                         showProgress(false);
@@ -307,18 +333,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
         try {
             Data data = Data.ADAPTER.decode(response.replace("%25", "%").getBytes());
             dbWrite = contactOpenHelper.getWritableDatabase();
-            ContentValues values;
 
-            Bitmap contactPhoto = BitmapFactory.decodeResource(getResources(), R.mipmap.ic_person_white_48dp);
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            contactPhoto.compress(Bitmap.CompressFormat.PNG, 100, baos);
-
-            for (Person temp : data.persons) {
+            for (final Person temp : data.persons) {
                 values = new ContentValues();
                 values.put("_id", temp.id);
                 values.put("name", temp.name);
-                values.put("photoSmall", baos.toByteArray());
-                values.put("photoLarge", baos.toByteArray());
                 values.put("isStarred", temp.isStarred);
                 dbWrite.insert("nameInfo", null, values);
             }
@@ -334,11 +353,30 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             dbWrite.close();
 
-            startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+            //startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception e) {
             e.printStackTrace();
         }
 
+    }
+
+    public void downloadPhoto(int id) {
+        values = new ContentValues();
+        dbWrite = contactOpenHelper.getWritableDatabase();
+
+        Log.d("qingqiu小图", "" + id);
+        String responseSmall = NetUtils.get("http://47.94.97.91/demo/downloadPhoto?user=" + preferences.getString("username", "") + "&id="+id + "&type=small");
+        byte[] photoSmall = Base64.decode(responseSmall.replace("%26", "&").replace("%25", "%"), Base64.URL_SAFE | Base64.NO_WRAP);
+        values.put("photoSmall", photoSmall);
+        dbWrite.update("nameInfo", values, "_id=?", new String[]{"" + id});
+
+        /*values = new ContentValues();
+        Log.d("qingqiu大图", "" + id);
+        String responseLarge = NetUtils.get("http://47.94.97.91/demo/downloadPhoto?user=" + preferences.getString("username", "") + "&id=1"+id+ "&type=large");
+        byte[] photoLarge = Base64.decode(responseLarge.replace("%26", "&").replace("%25", "%"), Base64.URL_SAFE | Base64.NO_WRAP);
+        values.put("photoLarge", photoLarge);
+*/
+        dbWrite.update("nameInfo", values, "_id=?", new String[]{"" + id});
     }
 
     private interface ProfileQuery {

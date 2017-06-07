@@ -86,7 +86,7 @@ public class ContactDetailActivity extends AppCompatActivity {
             }
         });
 
-        Palette p = Palette.from(contact.getPhotoLarge()).generate();
+        Palette p = Palette.from(contact.getPhotoSmall()).generate();
         int vibrant;
         int vibrantDark;
 
@@ -106,7 +106,7 @@ public class ContactDetailActivity extends AppCompatActivity {
         mToolBarLayout.setContentScrimColor(vibrant);
 
         imageView = (ImageView) findViewById(R.id.pic_detail);
-        imageView.setImageBitmap(contact.getPhotoLarge());
+        imageView.setImageBitmap(contact.getPhotoSmall());
         mCardView = (CardView) findViewById(R.id.card_detail);
 
         initData();

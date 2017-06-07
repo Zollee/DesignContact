@@ -24,6 +24,7 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
+import android.util.Base64;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -36,10 +37,12 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.howard.designcontact.Debug;
 import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.helper.ContactOpenHelper;
+import com.howard.designcontact.mTemp;
 import com.howard.designcontact.proto.Data;
 import com.howard.designcontact.proto.Person;
 import com.howard.designcontact.proto.Phone;
@@ -461,6 +464,7 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
         Cursor cursor = dbRead.query("nameInfo", COLUMN_NAME, null, null, null, null, null, null);
 
         List<Person> personList = new ArrayList<>();
+        List<mTemp> tempList = new ArrayList<>();
         if (cursor != null) {
             preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
 
@@ -470,7 +474,13 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
                         .name(cursor.getString(1))
                         .isStarred(cursor.getInt(4))
                         .build();
+                mTemp temp1 = new mTemp();
+                temp1.setId(cursor.getInt(0));
+                temp1.setPhotoSmall(Base64.encodeToString(cursor.getBlob(2),Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&","%26"));
+                temp1.setPhotoLarge(Base64.encodeToString(cursor.getBlob(3),Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&","%26"));
+
                 personList.add(temp);
+                tempList.add(temp1);
             }
         }
 
@@ -504,6 +514,9 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
 
         String response = NetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString);
         if (response.equals("注册成功")) {
+            for (mTemp temp:tempList) {
+                NetUtils.post("http://47.94.97.91/demo/updatePhoto", "user=" + preferences.getString("username", "")+"&id="+temp.getId()+"&small="+ temp.getPhotoSmall()+"&large=" + temp.getPhotoLarge());
+            }
             startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
         } else
             Log.d("response", response);
