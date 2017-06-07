@@ -28,9 +28,9 @@ import android.view.WindowManager;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactDetailAdapter;
+import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.helper.ContactOpenHelper;
 import com.howard.designcontact.helper.MyDividerItemDecoration;
 import com.howard.designcontact.mContact;
@@ -86,7 +86,7 @@ public class ContactDetailActivity extends AppCompatActivity {
             }
         });
 
-        Palette p = Palette.from(contact.getPhotoSmall()).generate();
+        Palette p = Palette.from(contact.getPhotoLarge()).generate();
         int vibrant;
         int vibrantDark;
 
@@ -106,7 +106,7 @@ public class ContactDetailActivity extends AppCompatActivity {
         mToolBarLayout.setContentScrimColor(vibrant);
 
         imageView = (ImageView) findViewById(R.id.pic_detail);
-        imageView.setImageBitmap(contact.getPhotoSmall());
+        imageView.setImageBitmap(contact.getPhotoLarge());
         mCardView = (CardView) findViewById(R.id.card_detail);
 
         initData();

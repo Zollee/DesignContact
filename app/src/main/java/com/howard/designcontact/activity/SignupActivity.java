@@ -37,11 +37,10 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.howard.designcontact.Debug;
-import com.howard.designcontact.helper.AsynNetUtils;
-import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.R;
+import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.helper.ContactOpenHelper;
+import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.mTemp;
 import com.howard.designcontact.proto.Data;
 import com.howard.designcontact.proto.Person;
@@ -476,8 +475,8 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
                         .build();
                 mTemp temp1 = new mTemp();
                 temp1.setId(cursor.getInt(0));
-                temp1.setPhotoSmall(Base64.encodeToString(cursor.getBlob(2),Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&","%26"));
-                temp1.setPhotoLarge(Base64.encodeToString(cursor.getBlob(3),Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&","%26"));
+                temp1.setPhotoSmall(Base64.encodeToString(cursor.getBlob(2), Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&", "%26"));
+                temp1.setPhotoLarge(Base64.encodeToString(cursor.getBlob(3), Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&", "%26"));
 
                 personList.add(temp);
                 tempList.add(temp1);
@@ -505,17 +504,15 @@ public class SignupActivity extends AppCompatActivity implements LoaderCallbacks
                 .persons(personList)
                 .phoned(phoneList)
                 .build();
-        Log.d("data", data.user);
 
         byte[] dataBytes = Data.ADAPTER.encode(data);
 
         String dataString = new String(dataBytes).replace("%", "%25");
-        Log.d("DataString", dataString);
 
         String response = NetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString);
         if (response.equals("注册成功")) {
-            for (mTemp temp:tempList) {
-                NetUtils.post("http://47.94.97.91/demo/updatePhoto", "user=" + preferences.getString("username", "")+"&id="+temp.getId()+"&small="+ temp.getPhotoSmall()+"&large=" + temp.getPhotoLarge());
+            for (mTemp temp : tempList) {
+                NetUtils.post("http://47.94.97.91/demo/updatePhoto", "user=" + preferences.getString("username", "") + "&id=" + temp.getId() + "&small=" + temp.getPhotoSmall() + "&large=" + temp.getPhotoLarge());
             }
             startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
         } else

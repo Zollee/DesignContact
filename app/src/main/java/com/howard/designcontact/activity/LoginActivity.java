@@ -7,6 +7,7 @@ import android.app.LoaderManager.LoaderCallbacks;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.CursorLoader;
+import android.content.Intent;
 import android.content.Loader;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -21,7 +22,6 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.text.TextUtils;
 import android.util.Base64;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -33,7 +33,6 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.howard.designcontact.Debug;
 import com.howard.designcontact.R;
 import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.helper.ContactOpenHelper;
@@ -192,8 +191,6 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
             AsynNetUtils.get("http://47.94.97.91/demo/login?username=" + email + "&password=" + password, new AsynNetUtils.Callback() {
                 @Override
                 public void onResponse(String response) {
-                    Log.d("info", response);
-
                     if (response.equals("登录通过")) {
                         preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
 
@@ -203,38 +200,12 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                         editor.putString("password", password);
                         editor.apply();
 
-                        Thread thread = new Thread(new Runnable() {
+                        new Thread(new Runnable() {
                             @Override
                             public void run() {
                                 downloadFromCloud();
                             }
-                        });
-                        thread.start();
-
-                        try {
-                            thread.join();
-                            dbRead = contactOpenHelper.getReadableDatabase();
-                            final Cursor cursorTemp;
-                            cursorTemp = dbRead.query("nameInfo", new String[]{"_id"}, null, null, null, null, null);
-                            if (cursorTemp != null) {
-                                while (cursorTemp.moveToNext()) {
-
-                                    Thread thread2 = new Thread(new Runnable() {
-                                        @Override
-                                        public void run() {
-                                            downloadPhoto(cursorTemp.getInt(0));
-                                        }
-                                    });
-                                    thread2.start();
-                                    thread2.join();
-
-                                }
-                            }
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                        }
-
-
+                        }).start();
                     } else {
                         Toast.makeText(getApplicationContext(), response, Toast.LENGTH_LONG).show();
                         showProgress(false);
@@ -339,6 +310,15 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
                 values.put("_id", temp.id);
                 values.put("name", temp.name);
                 values.put("isStarred", temp.isStarred);
+
+                String responseSmall = NetUtils.get("http://47.94.97.91/demo/downloadPhoto?user=" + preferences.getString("username", "") + "&id=" + temp.id + "&type=small");
+                byte[] photoSmall = Base64.decode(responseSmall.replace("%26", "&").replace("%25", "%"), Base64.URL_SAFE | Base64.NO_WRAP);
+                values.put("photoSmall", photoSmall);
+
+                String responseLarge = NetUtils.get("http://47.94.97.91/demo/downloadPhoto?user=" + preferences.getString("username", "") + "&id=" + temp.id + "&type=large");
+                byte[] photoLarge = Base64.decode(responseLarge.replace("%26", "&").replace("%25", "%"), Base64.URL_SAFE | Base64.NO_WRAP);
+                values.put("photoLarge", photoLarge);
+
                 dbWrite.insert("nameInfo", null, values);
             }
 
@@ -353,30 +333,11 @@ public class LoginActivity extends AppCompatActivity implements LoaderCallbacks<
 
             dbWrite.close();
 
-            //startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
+            startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Exception e) {
             e.printStackTrace();
         }
 
-    }
-
-    public void downloadPhoto(int id) {
-        values = new ContentValues();
-        dbWrite = contactOpenHelper.getWritableDatabase();
-
-        Log.d("qingqiu小图", "" + id);
-        String responseSmall = NetUtils.get("http://47.94.97.91/demo/downloadPhoto?user=" + preferences.getString("username", "") + "&id="+id + "&type=small");
-        byte[] photoSmall = Base64.decode(responseSmall.replace("%26", "&").replace("%25", "%"), Base64.URL_SAFE | Base64.NO_WRAP);
-        values.put("photoSmall", photoSmall);
-        dbWrite.update("nameInfo", values, "_id=?", new String[]{"" + id});
-
-        /*values = new ContentValues();
-        Log.d("qingqiu大图", "" + id);
-        String responseLarge = NetUtils.get("http://47.94.97.91/demo/downloadPhoto?user=" + preferences.getString("username", "") + "&id=1"+id+ "&type=large");
-        byte[] photoLarge = Base64.decode(responseLarge.replace("%26", "&").replace("%25", "%"), Base64.URL_SAFE | Base64.NO_WRAP);
-        values.put("photoLarge", photoLarge);
-*/
-        dbWrite.update("nameInfo", values, "_id=?", new String[]{"" + id});
     }
 
     private interface ProfileQuery {

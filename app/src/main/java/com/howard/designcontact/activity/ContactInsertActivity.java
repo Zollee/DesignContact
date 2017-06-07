@@ -19,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -28,12 +29,14 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 
-import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactEditAdapter;
+import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.helper.ContactOpenHelper;
 import com.howard.designcontact.helper.MyDividerItemDecoration;
+import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.mPhone;
+import com.howard.designcontact.mTemp;
 import com.howard.designcontact.proto.Data;
 import com.howard.designcontact.proto.Person;
 import com.howard.designcontact.proto.Phone;
@@ -189,6 +192,7 @@ public class ContactInsertActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.menu_check:
                 String name = mEditText_name.getText().toString();
+                final mTemp temp1 = new mTemp();
                 //检测姓名为空
                 if (name.equals("")) {
                     new AlertDialog.Builder(this)
@@ -216,6 +220,9 @@ public class ContactInsertActivity extends AppCompatActivity {
                     values.put("photoSmall", img_small);
                     values.put("photoLarge", img_large);
                     dbWrite.insert("nameInfo", null, values);
+
+                    temp1.setPhotoSmall(Base64.encodeToString(img_small, Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&", "%26"));
+                    temp1.setPhotoLarge(Base64.encodeToString(img_large, Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&", "%26"));
                 } else {
                     new AlertDialog.Builder(this)
                             .setMessage("姓名与已有重复")
@@ -263,6 +270,8 @@ public class ContactInsertActivity extends AppCompatActivity {
                     dbWrite.insert("phoneInfo", null, values);
                 }
 
+                temp1.setId(nameId);
+
                 Person temp = new Person.Builder()
                         .id(nameId)
                         .name(name)
@@ -296,10 +305,18 @@ public class ContactInsertActivity extends AppCompatActivity {
 
                 String dataString = new String(dataBytes).replace("%", "%25");
 
+
                 AsynNetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString, new AsynNetUtils.Callback() {
                     @Override
                     public void onResponse(String response) {
                         if (response.equals("注册成功")) {
+                            new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    NetUtils.post("http://47.94.97.91/demo/updatePhoto", "user=" + preferences.getString("username", "") + "&id=" + temp1.getId() + "&small=" + temp1.getPhotoSmall() + "&large=" + temp1.getPhotoLarge());
+                                }
+                            }).start();
+
                             dbRead.close();
                             dbWrite.close();
                             startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));

@@ -19,6 +19,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -29,14 +30,15 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
-import com.howard.designcontact.helper.AsynNetUtils;
-import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.R;
 import com.howard.designcontact.adapter.ContactEditAdapter;
+import com.howard.designcontact.helper.AsynNetUtils;
 import com.howard.designcontact.helper.ContactOpenHelper;
 import com.howard.designcontact.helper.MyDividerItemDecoration;
+import com.howard.designcontact.helper.NetUtils;
 import com.howard.designcontact.mContact;
 import com.howard.designcontact.mPhone;
+import com.howard.designcontact.mTemp;
 import com.howard.designcontact.proto.Data;
 import com.howard.designcontact.proto.Person;
 import com.howard.designcontact.proto.Phone;
@@ -204,6 +206,9 @@ public class ContactEditActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.menu_check:
                 final String name = mEditText_name.getText().toString();
+                final mTemp temp1 = new mTemp();
+                temp1.setId(contact.getId());
+
                 //检测姓名
                 if (name.equals("")) {
                     new AlertDialog.Builder(this)
@@ -218,7 +223,7 @@ public class ContactEditActivity extends AppCompatActivity {
                 cursorTemp = dbRead.query("nameInfo", new String[]{"_id"}, "name=?", new String[]{"" + name}, null, null, null);
 
                 //插入姓名
-                if (cursorTemp.getCount() == 1) {
+                if (cursorTemp.getCount() == 0) {
                     contactPhoto = ((BitmapDrawable) mImageView_photo.getDrawable()).getBitmap();
                     baos = new ByteArrayOutputStream();
                     contactPhoto.compress(Bitmap.CompressFormat.PNG, 100, baos);
@@ -231,7 +236,10 @@ public class ContactEditActivity extends AppCompatActivity {
                     values.put("photoSmall", img_small);
                     values.put("photoLarge", img_large);
                     dbWrite.update("nameInfo", values, "_id=?", new String[]{"" + contact.getId()});
-                } else {
+
+                    temp1.setPhotoSmall(Base64.encodeToString(img_small, Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&", "%26"));
+                    temp1.setPhotoLarge(Base64.encodeToString(img_large, Base64.URL_SAFE | Base64.NO_WRAP).replace("%", "%25").replace("&", "%26"));
+                } else if (cursorTemp.getCount() > 1) {
                     new AlertDialog.Builder(this)
                             .setMessage("姓名与已有重复")
                             .setPositiveButton("返回", null)
@@ -317,6 +325,7 @@ public class ContactEditActivity extends AppCompatActivity {
                                 public void run() {
                                     String response = NetUtils.post("http://47.94.97.91/demo/updateDatabase", "key=" + dataString);
                                     if (response.equals("注册成功")) {
+                                        NetUtils.post("http://47.94.97.91/demo/updatePhoto", "user=" + preferences.getString("username", "") + "&id=" + temp1.getId() + "&small=" + temp1.getPhotoSmall() + "&large=" + temp1.getPhotoLarge());
                                         dbWrite.close();
                                         dbRead.close();
                                         startActivity(new Intent(getApplicationContext(), ContactListActivity.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK));
@@ -329,8 +338,6 @@ public class ContactEditActivity extends AppCompatActivity {
                             Toast.makeText(getApplicationContext(), "删除失败", Toast.LENGTH_SHORT).show();
                     }
                 });
-
-
 
                 return true;
             default:
