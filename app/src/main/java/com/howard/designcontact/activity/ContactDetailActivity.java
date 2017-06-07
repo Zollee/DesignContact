@@ -2,6 +2,7 @@ package com.howard.designcontact.activity;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -72,6 +73,7 @@ public class ContactDetailActivity extends AppCompatActivity {
 
         contact.setName(cursor.getString(1));
         contact.setPhotoDisplay(cursor.getBlob(2));
+        contact.setIsStarred(cursor.getInt(3));
 
         //设置标题
         setContentView(R.layout.activity_contact_detail);
@@ -185,6 +187,13 @@ public class ContactDetailActivity extends AppCompatActivity {
 
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_contact_detail, menu);
+
+        MenuItem menuItem = menu.findItem(R.id.menu_detail_star);
+        if (contact.getIsStarred() == 0)
+            menuItem.setIcon(R.drawable.ic_star_border);
+        else
+            menuItem.setIcon(R.drawable.ic_star);
+
         return true;
     }
 
@@ -219,7 +228,32 @@ public class ContactDetailActivity extends AppCompatActivity {
                 return true;
 
             case R.id.menu_detail_star:
+                if (contact.getIsStarred() == 0) {
+                    item.setIcon(R.drawable.ic_star);
+                    preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+                    ContentValues values = new ContentValues();
+                    values.put("isStarred", 1);
+                    dbWrite.update("nameInfo", values, "_id=?", new String[]{"" + contact.getId()});
 
+                    AsynNetUtils.post("http://47.94.97.91/demo/changeStar", "user=" + preferences.getString("username", "") + "&id=" + contact.getId() + "&star=1", new AsynNetUtils.Callback() {
+                        @Override
+                        public void onResponse(String response) {
+                        }
+                    });
+                } else {
+                    preferences = getSharedPreferences("phone", Context.MODE_PRIVATE);
+
+                    item.setIcon(R.drawable.ic_star_border);
+                    ContentValues values = new ContentValues();
+                    values.put("isStarred", 0);
+                    dbWrite.update("nameInfo", values, "_id=?", new String[]{"" + contact.getId()});
+
+                    AsynNetUtils.post("http://47.94.97.91/demo/changeStar", "user=" + preferences.getString("username", "") + "&id=" + contact.getId() + "&star=0", new AsynNetUtils.Callback() {
+                        @Override
+                        public void onResponse(String response) {
+                        }
+                    });
+                }
                 return true;
 
             case R.id.menu_detail_edit:

@@ -53,6 +53,7 @@ public class SplashActivity extends AppCompatActivity {
                         new String[]{Manifest.permission.READ_CONTACTS},
                         MY_PERMISSIONS_REQUEST_READ_CONTACTS);
             } else {
+                Toast.makeText(getApplicationContext(), "请提供联系人权限", Toast.LENGTH_LONG).show();
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_CONTACTS},
                         MY_PERMISSIONS_REQUEST_READ_CONTACTS);

@@ -113,6 +113,7 @@ public class ContactListActivity extends AppCompatActivity
                 temp.setName(cursor.getString(1));
                 temp.setPhotoCore(cursor.getBlob(2));
                 temp.photoSmall = temp.getPhotoSmall();
+                temp.setIsStarred(cursor.getInt(3));
 
                 mContacts.add(temp);
             }

@@ -53,6 +53,10 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
         // 绑定数据
         holder.mName.setText(mData.get(position).getName());
         holder.mPic.setImageBitmap(mData.get(position).getPhotoSmall());
+        if (mData.get(position).getIsStarred() == 1)
+            holder.mStar.setVisibility(View.VISIBLE);
+        else
+            holder.mStar.setVisibility(View.INVISIBLE);
 
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -92,11 +96,13 @@ public class ContactItemAdapter extends RecyclerView.Adapter<ContactItemAdapter.
 
         TextView mName;
         ImageView mPic;
+        ImageView mStar;
 
         public ViewHolder(View itemView) {
             super(itemView);
             mName = (TextView) itemView.findViewById(R.id.item_list_name);
             mPic = (ImageView) itemView.findViewById(R.id.item_list_pic);
+            mStar = (ImageView) itemView.findViewById(R.id.item_list__star);
         }
     }
 }

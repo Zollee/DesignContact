@@ -18,6 +18,7 @@ public class mContact implements Parcelable {
             p.setName(source.readString());
             p.photoCore = new byte[source.readInt()];
             source.readByteArray(p.photoCore);
+            p.setIsStarred(source.readInt());
 
             return p;
         }
@@ -34,6 +35,7 @@ public class mContact implements Parcelable {
     public Bitmap photoLarge;
     public byte[] photoCore;
     public byte[] photoDisplay;
+    public int isStarred;
 
     public void writeToParcel(Parcel dest, int flags) {
         // TODO Auto-generated method stub
@@ -43,6 +45,7 @@ public class mContact implements Parcelable {
         dest.writeString(name);
         dest.writeInt(photoCore.length);
         dest.writeByteArray(photoCore);
+        dest.writeInt(isStarred);
     }
 
 
@@ -83,4 +86,11 @@ public class mContact implements Parcelable {
         return BitmapFactory.decodeByteArray(photoDisplay, 0, photoDisplay.length);
     }
 
+    public int getIsStarred() {
+        return this.isStarred;
+    }
+
+    public void setIsStarred(int i) {
+        this.isStarred = i;
+    }
 }

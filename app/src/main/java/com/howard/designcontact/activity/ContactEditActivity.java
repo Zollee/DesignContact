@@ -1,10 +1,12 @@
 package com.howard.designcontact.activity;
 
+import android.Manifest;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
@@ -13,6 +15,8 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -49,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ContactEditActivity extends AppCompatActivity {
+    public static final int MY_PERMISSIONS_REQUEST_READ_STORAGE = 1;
 
     public final static int ALBUM_REQUEST_CODE = 1;
     public final static int CROP_REQUEST = 2;
@@ -128,32 +133,48 @@ public class ContactEditActivity extends AppCompatActivity {
         mImageButton_select_photo.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new AlertDialog.Builder(ContactEditActivity.this)
-                        .setItems(new String[]{"拍照", "从相册选取照片", "清除照片"}, new DialogInterface.OnClickListener() {
-                            @Override
-                            public void onClick(DialogInterface dialog, int which) {
-                                File file = new File(Environment.getExternalStorageDirectory(), "./img_test.jpg");
-                                imageUri = FileProvider.getUriForFile(getApplicationContext(), "com.howard.designcontact.provider", file);//通过FileProvider创建一个content类型的Uri
-                                switch (which) {
-                                    case 0:
-                                        Intent intent = new Intent();
-                                        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION); //添加这一句表示对目标应用临时授权该Uri所代表的文件
-                                        intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);//设置Action为拍照
-                                        intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);//将拍取的照片保存到指定URI
-                                        startActivityForResult(intent, CAMERA_REQUEST_CODE);
-                                        break;
-                                    case 1:
-                                        Intent selectIntent = new Intent(Intent.ACTION_PICK);
-                                        selectIntent.setType("image/*");//从所有图片中进行选择
-                                        startActivityForResult(selectIntent, ALBUM_REQUEST_CODE);
-                                        break;
-                                    case 2:
-                                        mImageView_photo.setImageResource(R.mipmap.ic_person_white_48dp);
-                                        break;
+                if (ContextCompat.checkSelfPermission(getApplicationContext(),
+                        Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                    if (ActivityCompat.shouldShowRequestPermissionRationale(ContactEditActivity.this,
+                            Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                        Toast.makeText(getApplicationContext(), "请提供存储卡权限", Toast.LENGTH_LONG).show();
+                        ActivityCompat.requestPermissions(ContactEditActivity.this,
+                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                MY_PERMISSIONS_REQUEST_READ_STORAGE);
+                    } else {
+                        Toast.makeText(getApplicationContext(), "请提供存储卡权限", Toast.LENGTH_LONG).show();
+                        ActivityCompat.requestPermissions(ContactEditActivity.this,
+                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
+                                MY_PERMISSIONS_REQUEST_READ_STORAGE);
+                    }
+                } else {
+                    new AlertDialog.Builder(ContactEditActivity.this)
+                            .setItems(new String[]{"拍照", "从相册选取照片", "清除照片"}, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    File file = new File(Environment.getExternalStorageDirectory(), "./img_test.jpg");
+                                    imageUri = FileProvider.getUriForFile(getApplicationContext(), "com.howard.designcontact.provider", file);
+                                    switch (which) {
+                                        case 0:
+                                            Intent intent = new Intent();
+                                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                            intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
+                                            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                                            startActivityForResult(intent, CAMERA_REQUEST_CODE);
+                                            break;
+                                        case 1:
+                                            Intent selectIntent = new Intent(Intent.ACTION_PICK);
+                                            selectIntent.setType("image/*");
+                                            startActivityForResult(selectIntent, ALBUM_REQUEST_CODE);
+                                            break;
+                                        case 2:
+                                            mImageView_photo.setImageResource(R.mipmap.ic_person_white_48dp);
+                                            break;
+                                    }
                                 }
-                            }
-                        })
-                        .show();
+                            })
+                            .show();
+                }
             }
         });
         mButton_edit_add.setOnClickListener(new View.OnClickListener() {
@@ -379,9 +400,9 @@ public class ContactEditActivity extends AppCompatActivity {
 
     public void startImageZoom(Uri uri) {
         File file = new File(Environment.getExternalStorageDirectory(), "./img_test.jpg");
-        imageUri = FileProvider.getUriForFile(getApplicationContext(), "com.howard.designcontact.provider", file);//通过FileProvider创建一个content类型的Uri
+        imageUri = FileProvider.getUriForFile(getApplicationContext(), "com.howard.designcontact.provider", file);
 
-        Intent intent = new Intent("com.android.camera.action.CROP");//调用Android系统自带的一个图片剪裁页面
+        Intent intent = new Intent("com.android.camera.action.CROP");
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
         intent.setDataAndType(uri, "image/*");
         intent.putExtra("crop", "true");
@@ -397,4 +418,43 @@ public class ContactEditActivity extends AppCompatActivity {
         startActivityForResult(intent, CROP_REQUEST);
     }
 
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case MY_PERMISSIONS_REQUEST_READ_STORAGE: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    new AlertDialog.Builder(ContactEditActivity.this)
+                            .setItems(new String[]{"拍照", "从相册选取照片", "清除照片"}, new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    File file = new File(Environment.getExternalStorageDirectory(), "./img_test.jpg");
+                                    imageUri = FileProvider.getUriForFile(getApplicationContext(), "com.howard.designcontact.provider", file);
+                                    switch (which) {
+                                        case 0:
+                                            Intent intent = new Intent();
+                                            intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                                            intent.setAction(MediaStore.ACTION_IMAGE_CAPTURE);
+                                            intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+                                            startActivityForResult(intent, CAMERA_REQUEST_CODE);
+                                            break;
+                                        case 1:
+                                            Intent selectIntent = new Intent(Intent.ACTION_PICK);
+                                            selectIntent.setType("image/*");
+                                            startActivityForResult(selectIntent, ALBUM_REQUEST_CODE);
+                                            break;
+                                        case 2:
+                                            mImageView_photo.setImageResource(R.mipmap.ic_person_white_48dp);
+                                            break;
+                                    }
+                                }
+                            })
+                            .show();
+                } else {
+                    Toast.makeText(getApplicationContext(), "请提供存储卡权限", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+    }
 }
