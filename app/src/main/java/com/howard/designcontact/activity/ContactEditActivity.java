@@ -244,7 +244,7 @@ public class ContactEditActivity extends AppCompatActivity {
                 cursorTemp = dbRead.query("nameInfo", new String[]{"_id"}, "name=?", new String[]{"" + name}, null, null, null);
 
                 //插入姓名
-                if (cursorTemp.getCount() == 0) {
+                if (cursorTemp.getCount() == 1) {
                     contactPhoto = ((BitmapDrawable) mImageView_photo.getDrawable()).getBitmap();
                     baos = new ByteArrayOutputStream();
                     contactPhoto.compress(Bitmap.CompressFormat.PNG, 100, baos);
